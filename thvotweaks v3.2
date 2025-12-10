@@ -1,6 +1,6 @@
 # ===========================================
-#    THVO PC Tweaker v2.8
-#    Expanded KBM and Internet Tweaks
+#       LIQUID TECH PC Tweaker v3.2
+#    Dynamic DNS Optimizer Build
 # ===========================================
 
 # --- SELF-ELEVATION CHECK ---
@@ -10,11 +10,11 @@ if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]:
     Exit
 }
 
-$LTVersion = "2.8"   
+$LTVersion = "3.2"   
 $LTRepoURL = "https://raw.githubusercontent.com/YOURNAME/YOURREPO/main/LiquidTechTweaker.ps1"
 
 # ------------------------------
-#       ASCII LOGO (THVO)
+#       ASCII LOGO (Liquid)
 # ------------------------------
 $LTLogo = @"
 ___________.__                          __                        __            
@@ -81,18 +81,23 @@ function LT-Menu {
     Write-Host "   11) Repair Windows Components (DISM/SFC)"
     Write-Host "   12) Debloater (Safe Apps Only)"
     Write-Host "   13) FPS Booster (Advanced + Power Fix)"
-    Write-Host "   14) Extra Debloater (Aggressive)"
+    Write-Host "   14) Aggressive Visual Optimization (MAX FPS Tweak)"
+    Write-Host "   15) System Timer Resolution Fix (Thread Priority)"
 
+    Write-Host "`n  [ PROCESS & MEMORY ]" -ForegroundColor Cyan
+    Write-Host "   16) Smart Process Reducer (Superfetch/Error Fix!)"
+    Write-Host "   17) Deep Process Cleaner (Media/UPnP Services)"
+    Write-Host "   18) Extreme Process Purge (Camera/App Experience!)"
+    Write-Host "   19) Virtual Memory Optimizer"
+    Write-Host "   20) Extra Safe Tweaks"
 
-    Write-Host "   15) Smart Process Reducer (Superfetch/Error Fix!)"
-    Write-Host "   16) Virtual Memory Optimizer"
-    Write-Host "   17) Extra Safe Tweaks"
-    Write-Host "   18) Input Latency Fix (Mouse Interrupt Tweak!)"
+    Write-Host "`n  [ INPUT LATENCY ]" -ForegroundColor Cyan
+    Write-Host "   21) Input Latency Optimizer (Submenu)"
 
 
     Write-Host "`n  [ OTHER ]" -ForegroundColor Cyan
-    Write-Host "   19) Check for Updates"
-    Write-Host "   20) Exit"
+    Write-Host "   22) Check for Updates"
+    Write-Host "   23) Exit"
     Write-Host ""
 }
 
@@ -195,7 +200,7 @@ function LT-ServiceOptimize {
 # ------------------------------
 #      Smart Process Reducer (No Change)
 # ------------------------------
-function LT-ProcessReducer {
+function LT-SmartProcessReducer {
     LT-Header
     Write-Host "SMART PROCESS REDUCER" -ForegroundColor Cyan
     Write-Host "Disabling background tasks including SysMain, Error Reporting, and Virtual Printers." -ForegroundColor Gray
@@ -268,6 +273,77 @@ function LT-ProcessReducer {
 }
 
 # ------------------------------
+#      Deep Process Cleaner (No Change)
+# ------------------------------
+function LT-DeepProcessCleaner {
+    LT-Header
+    Write-Host "DEEP PROCESS CLEANER" -ForegroundColor Cyan
+    Write-Host "Targets media sharing, network discovery, and secondary printer services." -ForegroundColor Gray
+    Write-Host ""
+    
+    $deepServices = @(
+        "SSDPSRV",      # SSDP Discovery Service (Used for UPnP/network discovery)
+        "upnphost",     # UPnP Device Host
+        "PcaSvc",       # Program Compatibility Assistant Service
+        "WMPNetworkSvc",# Windows Media Player Network Sharing Service
+        "Fax"           # Fax Service (If user missed it in Smart Reducer)
+    )
+
+    Write-Host "Disabling deep system services..." -ForegroundColor Yellow
+    foreach ($svc in $deepServices) { 
+        if (Get-Service -Name $svc -ErrorAction SilentlyContinue) { 
+            Set-Service -Name $svc -StartupType Disabled 
+            Stop-Service -Name $svc -ErrorAction SilentlyContinue
+            Write-Host "Disabled: $svc" -ForegroundColor Gray
+        } 
+    }
+    
+    Write-Host "Killing desktop bloat processes..." -ForegroundColor Yellow
+    $desktopBloat = @("ShellExperienceHost", "SearchUI")
+    foreach ($proc in $desktopBloat) {
+        # Note: Killing these can cause Explorer to restart, which is fine.
+        Stop-Process -Name $proc -Force -ErrorAction SilentlyContinue
+    }
+
+    Write-Host "Deep clean complete. Reboot for maximum effect." -ForegroundColor Green
+    Pause
+}
+
+# ------------------------------
+#      Extreme Process Purge (No Change)
+# ------------------------------
+function LT-ExtremeProcessPurge {
+    LT-Header
+    Write-Host "🔥 EXTREME PROCESS PURGE" -ForegroundColor Red
+    Write-Host "WARNING: This targets services for Windows Hello, secondary devices, and application experience. Do NOT run if you rely on cameras, PIN/fingerprint login, or specialized devices." -ForegroundColor Yellow
+    Write-Host ""
+    
+    $extremeServices = @(
+        "TokenBroker",        # Token Broker (Used by modern apps, can be high CPU)
+        "DeviceAssociationService", # Enables pairing of devices (e.g., Bluetooth, peripherals)
+        "WebcamService",      # Camera related services
+        "FrameServer",        # Windows Camera Frame Server
+        "PimIndexMaintenanceSvc", # Contact Data maintenance
+        "cbdhsvc_26e7a",      # ClipSVC related (License management)
+        "ServiceBus",         # App-related background component
+        "AppReadiness",       # App Readiness Service (Pre-caching for apps)
+        "DoSvc"               # Delivery Optimization Service (P2P updates)
+    )
+
+    Write-Host "Disabling extreme background services..." -ForegroundColor Yellow
+    foreach ($svc in $extremeServices) { 
+        if (Get-Service -Name $svc -ErrorAction SilentlyContinue) { 
+            Set-Service -Name $svc -StartupType Disabled 
+            Stop-Service -Name $svc -ErrorAction SilentlyContinue
+            Write-Host "Disabled: $svc" -ForegroundColor Gray
+        } 
+    }
+    
+    Write-Host "Extreme process purge complete. **A reboot is highly recommended.**" -ForegroundColor Green
+    Pause
+}
+
+# ------------------------------
 #      Virtual Memory Optimizer (No Change)
 # ------------------------------
 function LT-MemoryOptimizer {
@@ -292,8 +368,8 @@ function LT-MemoryOptimizer {
     Set-CimInstance -Query "SELECT * FROM Win32_PageFileSetting WHERE Name = 'C:\\pagefile.sys'" -Property @{InitialSize=$InitialSize; MaximumSize=$MaximumSize} -ErrorAction SilentlyContinue
     
     # 2. Disable Dynamic Management
-    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Name "PagingFiles" -Value "C:\pagefile.sys $InitialSize $MaximumSize" -Type MultiString -Force | Out-Null
-    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Name "ClearPageFileAtShutdown" -Value 0 -Type DWord -Force | Out-Null
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentVersion\Control\Session Manager\Memory Management" -Name "PagingFiles" -Value "C:\pagefile.sys $InitialSize $MaximumSize" -Type MultiString -Force | Out-Null
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentVersion\Control\Session Manager\Memory Management" -Name "ClearPageFileAtShutdown" -Value 0 -Type DWord -Force | Out-Null
 
     # 3. Disable Hibernation (Removes hiberfil.sys and related background processes)
     $hibernation = Read-Host "Do you use Hibernation (saving session to disk)? (Y/N)"
@@ -338,16 +414,34 @@ function LT-ExtraSafeTweaks {
 }
 
 # ------------------------------
-#      Input Latency Fix (EXPANDED KBM)
+#      Input Latency Optimizer (No Change)
 # ------------------------------
-function LT-InputLatencyFix {
+function LT-InputLatencyOptimizerMenu {
     LT-Header
-    Write-Host "INPUT LATENCY FIX (Mouse & Keyboard)" -ForegroundColor Cyan
-    Write-Host "Applying verified registry tweaks to reduce input processing delays." -ForegroundColor Gray
+    Write-Host "  [ INPUT LATENCY OPTIMIZER ]" -ForegroundColor Cyan
+    Write-Host "   21.1) Standard Mouse/Keyboard Fixes (Queue, Speed, Acceleration)"
+    Write-Host "   21.2) USB Polling & Interrupt Tweak (Force High Priority)"
+    Write-Host "   21.3) Gaming Input Buffer Reduction (Desktop Composition)"
+    Write-Host "   21.4) Return to Main Menu"
     Write-Host ""
 
-    # 1. Mouse/Keyboard Input Queue Reduction 
-    Write-Host "Applying Low Latency Input Queue Tweak (Class keys)..." -ForegroundColor Yellow
+    $subChoice = Read-Host "Select a sub-option"
+    switch ($subChoice) {
+        "21.1" { LT-StandardInputFixes }
+        "21.2" { LT-USBPriorityFix }
+        "21.3" { LT-GamingBufferReduce }
+        "21.4" { return }
+        default { Write-Host "Invalid selection." -ForegroundColor Red; Start-Sleep 1 }
+    }
+    Pause
+}
+
+function LT-StandardInputFixes {
+    LT-Header
+    Write-Host "1. Standard Mouse/Keyboard Fixes" -ForegroundColor Yellow
+
+    # Mouse/Keyboard Input Queue Reduction 
+    Write-Host "Applying Low Latency Input Queue Tweak (Class keys)..." -ForegroundColor Cyan
     
     # Mouse Class GUID
     $mouseQueuePathBase = "HKLM:\SYSTEM\CurrentControlSet\Control\Class\{4d36e96f-e325-11ce-bfc1-08002be10318}"
@@ -359,35 +453,14 @@ function LT-InputLatencyFix {
     foreach ($path in $paths) {
         try {
             New-ItemProperty -Path $path -Name "MaxInputDataQueueLength" -Value 20 -PropertyType DWord -Force -ErrorAction Stop | Out-Null
-            Write-Host "  Successfully set MaxInputDataQueueLength on $path" -ForegroundColor DarkGreen
+            Write-Host "  Set MaxInputDataQueueLength on $path" -ForegroundColor DarkGreen
         } catch {
-            Write-Host "  ERROR: Failed to set MaxInputDataQueueLength on $path. (Access is denied)" -ForegroundColor Red
+            Write-Host "  ERROR: Failed to set MaxInputDataQueueLength on $path." -ForegroundColor Red
         }
     }
     
-    # 2. Force Feedback Desktop Delay Reduction (Affects gaming input buffer)
-    Write-Host "Applying Force Feedback Delay Reduction (Low-latency gaming input)..." -ForegroundColor Yellow
-    $ffRegPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp"
-    try {
-        New-ItemProperty -Path $ffRegPath -Name "ForceFeedbackDesktop" -Value 0 -PropertyType DWord -Force -ErrorAction Stop | Out-Null
-        Write-Host "  Successfully set ForceFeedbackDesktop to 0" -ForegroundColor DarkGreen
-    } catch {
-        Write-Host "  ERROR: Failed to set ForceFeedbackDesktop value." -ForegroundColor Red
-    }
-
-    # 3. NEW: Mouse Interrupt Priority (Increases mouse interrupt handling speed)
-    Write-Host "Setting Mouse Interrupt Priority to high..." -ForegroundColor Yellow
-    $mouseInterruptPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon"
-    try {
-        New-ItemProperty -Path $mouseInterruptPath -Name "SaturatedWriteWhenMiceOrKeyboardsAreUsed" -Value 1 -PropertyType DWord -Force -ErrorAction Stop | Out-Null
-        Write-Host "  Successfully set SaturatedWriteWhenMiceOrKeyboardsAreUsed to 1" -ForegroundColor DarkGreen
-    } catch {
-        Write-Host "  ERROR: Failed to set Mouse Interrupt Priority value." -ForegroundColor Red
-    }
-
-
-    # 4. DISABLE Mouse Acceleration (Enhanced Pointer Precision)
-    Write-Host "Disabling Enhanced Pointer Precision (Mouse Acceleration)..." -ForegroundColor Yellow
+    # DISABLE Mouse Acceleration (Enhanced Pointer Precision)
+    Write-Host "Disabling Enhanced Pointer Precision (Mouse Acceleration)..." -ForegroundColor Cyan
     $mouseReg = "HKCU:\Control Panel\Mouse"
     
     Set-ItemProperty -Path $mouseReg -Name "MouseThreshold1" -Value 0 -Type String -Force | Out-Null
@@ -395,20 +468,77 @@ function LT-InputLatencyFix {
     Set-ItemProperty -Path $mouseReg -Name "MouseSpeed" -Value 1 -Type String -Force | Out-Null 
     Set-ItemProperty -Path $mouseReg -Name "MouseAcceleration" -Value 0 -Type String -Force | Out-Null
 
-    # 5. Keyboard Repeat Rate Fix (Minimum delay/Maximum repeat speed)
-    Write-Host "Setting Keyboard Repeat Rate to Max Speed..." -ForegroundColor Yellow
+    # Keyboard Repeat Rate Fix (Minimum delay/Maximum repeat speed)
+    Write-Host "Setting Keyboard Repeat Rate to Max Speed..." -ForegroundColor Cyan
     $keyboardReg = "HKCU:\Control Panel\Keyboard"
     Set-ItemProperty -Path $keyboardReg -Name "KeyboardDelay" -Value 0 -Type String -Force | Out-Null # Minimum delay (0-3)
     Set-ItemProperty -Path $keyboardReg -Name "KeyboardSpeed" -Value 31 -Type String -Force | Out-Null # Maximum speed (0-31)
 
+    Write-Host "Standard input fixes applied." -ForegroundColor Green
+}
 
-    Write-Host "Input latency fixes applied. Please reboot your PC to feel the full effect." -ForegroundColor Green
-    Pause
+function LT-USBPriorityFix {
+    LT-Header
+    Write-Host "2. USB Polling & Interrupt Tweak" -ForegroundColor Yellow
+
+    # Force Mouse Interrupt Priority to High (Prevents CPU from delaying mouse processing)
+    Write-Host "Setting Mouse Interrupt Priority to high..." -ForegroundColor Cyan
+    $mouseInterruptPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon"
+    try {
+        # This key forces system to prioritize input writes
+        New-ItemProperty -Path $mouseInterruptPath -Name "SaturatedWriteWhenMiceOrKeyboardsAreUsed" -Value 1 -PropertyType DWord -Force -ErrorAction Stop | Out-Null
+        Write-Host "  Set SaturatedWriteWhenMiceOrKeyboardsAreUsed to 1" -ForegroundColor DarkGreen
+    } catch {
+        Write-Host "  ERROR: Failed to set Mouse Interrupt Priority value." -ForegroundColor Red
+    }
+    
+    # Disable USB Selective Suspend (Stops USB ports from entering low-power states, reducing polling delay)
+    Write-Host "Disabling USB Selective Suspend Power Save..." -ForegroundColor Cyan
+    $usbRegPath = "HKLM:\SYSTEM\CurrentControlSet\Services\USB"
+    Set-ItemProperty -Path $usbRegPath -Name "DisableSelectiveSuspend" -Value 1 -Type DWord -Force | Out-Null
+    
+    # Set power plan settings (for the currently active scheme) to disable USB power saving
+    Write-Host "Disabling USB power saving in active Power Scheme..." -ForegroundColor Cyan
+    $activeGuid = (powercfg -getactivescheme | Select-String -Pattern "Power Scheme GUID: (.*?) ").Matches[0].Groups[1].Value.Trim()
+    
+    # Setting the USB Selective Suspend global flag to 0 (Disabled)
+    powercfg /SETACVALUEINDEX $activeGuid 2a737441-1930-4402-8d77-b2bebba308a3 48e6b7a6-50f5-4782-a5d4-53bb8f07e226 0 | Out-Null
+    powercfg /SETDCVALUEINDEX $activeGuid 2a737441-1930-4402-8d77-b2bebba308a3 48e6b7a6-50f5-4782-a5d4-53bb8f07e226 0 | Out-Null
+    
+    Write-Host "USB polling and interrupt tweaks applied." -ForegroundColor Green
+}
+
+function LT-GamingBufferReduce {
+    LT-Header
+    Write-Host "3. Gaming Input Buffer Reduction" -ForegroundColor Yellow
+
+    # Force Feedback Desktop Delay Reduction (Affects gaming input buffer/RDP compatibility)
+    Write-Host "Applying Force Feedback Delay Reduction (Low-latency gaming input)..." -ForegroundColor Cyan
+    $ffRegPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp"
+    try {
+        New-ItemProperty -Path $ffRegPath -Name "ForceFeedbackDesktop" -Value 0 -PropertyType DWord -Force -ErrorAction Stop | Out-Null
+        Write-Host "  Set ForceFeedbackDesktop to 0" -ForegroundColor DarkGreen
+    } catch {
+        Write-Host "  ERROR: Failed to set ForceFeedbackDesktop value." -ForegroundColor Red
+    }
+    
+    # Disable Desktop Composition for input (Windows 7 legacy, but still affects input pipeline on some Win10/11 versions)
+    Write-Host "Disabling Desktop Composition Input Delay..." -ForegroundColor Cyan
+    $desktopCompositionReg = "HKCU:\Software\Microsoft\Windows\DWM"
+    try {
+        New-ItemProperty -Path $desktopCompositionReg -Name "Composition" -Value 0 -PropertyType DWord -Force -ErrorAction Stop | Out-Null
+        New-ItemProperty -Path $desktopCompositionReg -Name "CompositionPolicy" -Value 0 -PropertyType DWord -Force -ErrorAction Stop | Out-Null
+        Write-Host "  Desktop Composition Input settings set to 0" -ForegroundColor DarkGreen
+    } catch {
+        Write-Host "  ERROR: Failed to apply Desktop Composition tweaks." -ForegroundColor Red
+    }
+    
+    Write-Host "Gaming input buffer reductions applied." -ForegroundColor Green
 }
 
 
 # ------------------------------
-#        Internet Optimizer (EXPANDED)
+#        Internet Optimizer (No Change)
 # ------------------------------
 function LT-InternetOptimize {
     LT-Header
@@ -422,7 +552,7 @@ function LT-InternetOptimize {
     netsh interface tcp set global autotuninglevel=normal | Out-Null
     netsh interface tcp set global congestionprovider=ctcp | Out-Null
     
-    # NEW: Disable Network Throttling (improves bandwidth for background apps/games)
+    # Disable Network Throttling (improves bandwidth for background apps/games)
     Write-Host "Disabling Network Throttling..." -ForegroundColor Cyan
     $regPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile"
     New-ItemProperty -Path $regPath -Name "NetworkThrottlingIndex" -Value 0 -PropertyType DWord -Force | Out-Null
@@ -497,7 +627,7 @@ function LT-FPSBoost {
     }
 
     # 2. GPU Scheduling
-    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" -Name HwSchMode -Value 2 -Force -ErrorAction SilentlyContinue
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" -Name "HwSchMode" -Value 2 -Force -ErrorAction SilentlyContinue
 
     # 3. Game Mode
     Set-ItemProperty -Path "HKCU:\Software\Microsoft\GameBar" -Name "AutoGameModeEnabled" -Value 1 -Force -ErrorAction SilentlyContinue
@@ -511,7 +641,71 @@ function LT-FPSBoost {
 }
 
 # ------------------------------
-#        Latency Optimizer (EXPANDED)
+#    Aggressive Visual Optimization (No Change)
+# ------------------------------
+function LT-VisualOptimize {
+    LT-Header
+    Write-Host "AGGRESSIVE VISUAL OPTIMIZATION" -ForegroundColor Cyan
+    Write-Host "Disabling Windows animations, shadows, and Aero for maximum raw FPS." -ForegroundColor Gray
+    Write-Host ""
+    
+    # 1. Disable Window Animations (Aero Peek, fading, sliding)
+    Write-Host "Disabling window animations (Visual effects)..." -ForegroundColor Yellow
+    $desktopReg = "HKCU:\Control Panel\Desktop"
+    Set-ItemProperty -Path $desktopReg -Name "UserPreferencesMask" -Value ([byte[]](0x9e, 0x1e, 0x07, 0x80, 0x12, 0x00, 0x00, 0x00)) -Force -Type Binary | Out-Null
+    Set-ItemProperty -Path $desktopReg -Name "DragFullWindows" -Value 0 -Force | Out-Null
+    Set-ItemProperty -Path $desktopReg -Name "MenuShowDelay" -Value 0 -Force | Out-Null
+    
+    # 2. Disable Taskbar Translucency (Aero)
+    Write-Host "Disabling Taskbar transparency/translucency..." -ForegroundColor Yellow
+    $aeroReg = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize"
+    Set-ItemProperty -Path $aeroReg -Name "EnableTransparency" -Value 0 -Type DWord -Force | Out-Null
+    
+    # 3. Disable Visual Effects on the fly
+    Write-Host "Setting Visual Effects to 'Adjust for best performance'..." -ForegroundColor Yellow
+    # This involves setting many values in the registry, the UserPreferencesMask above usually covers it all,
+    # but we will manually ensure the key low-impact flags are set to 0.
+    $aeroReg2 = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced"
+    Set-ItemProperty -Path $aeroReg2 -Name "ListviewShadow" -Value 0 -Type DWord -Force | Out-Null
+    Set-ItemProperty -Path $aeroReg2 -Name "TaskbarAnimations" -Value 0 -Type DWord -Force | Out-Null
+    
+    Write-Host "Visual optimization complete. Log off and back on for full effect." -ForegroundColor Green
+    Pause
+}
+
+# ------------------------------
+#    System Timer Resolution Fix (No Change)
+# ------------------------------
+function LT-TimerResolution {
+    LT-Header
+    Write-Host "SYSTEM TIMER RESOLUTION FIX" -ForegroundColor Cyan
+    Write-Host "Optimizing kernel timer to reduce thread scheduling jitter (1ms)." -ForegroundColor Gray
+    Write-Host "Requires a third-party tool to set persistently, but we will fix the registry." -ForegroundColor Yellow
+    Write-Host ""
+    
+    # The registry tweak forces the system to prioritize timer resolution
+    $regPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile"
+    
+    Write-Host "Applying SystemProfile registry tweak..." -ForegroundColor Yellow
+    
+    # Set priority to 'Gaming' or a high priority
+    New-ItemProperty -Path $regPath -Name "SystemResponsiveness" -Value 0 -PropertyType DWord -Force | Out-Null
+    
+    # Create or update the Task folder for high priority threads
+    $taskPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games"
+    if (-not (Test-Path $taskPath)) { New-Item -Path $taskPath -Force | Out-Null }
+    
+    # Set Gaming Profile values
+    New-ItemProperty -Path $taskPath -Name "Scheduling Category" -Value "High" -Force | Out-Null
+    New-ItemProperty -Path $taskPath -Name "Priority" -Value 6 -Type DWord -Force | Out-Null
+    New-ItemProperty -Path $taskPath -Name "SFIO Priority" -Value "High" -Force | Out-Null
+    
+    Write-Host "Timer registry settings applied. You may need to run a 3rd party timer tool (e.g., Timer Resolution) for constant 1ms." -ForegroundColor Green
+    Pause
+}
+
+# ------------------------------
+#        Latency Optimizer (No Change)
 # ------------------------------
 function LT-Latency {
     LT-Header
@@ -522,7 +716,7 @@ function LT-Latency {
     netsh int tcp set global ecncapability=disabled | Out-Null
     netsh int tcp set global rss=enabled | Out-Null
     
-    # NEW: Disable Nagle's Algorithm (Crucial for low latency gaming/VOIP)
+    # Disable Nagle's Algorithm (Crucial for low latency gaming/VOIP)
     Write-Host "Disabling Nagle's Algorithm for lower latency..." -ForegroundColor Cyan
     $tcpPath = "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces"
     
@@ -536,108 +730,64 @@ function LT-Latency {
     Pause
 }
 
+
 # ------------------------------
-#        DNS Changer Module (No Change)
+#        DNS Changer Module (UPDATED)
 # ------------------------------
-function LT-DNSChanger {
-    LT-Header
+function LT-GetAdapter {
     Write-Host "Detecting active network adapter..." -ForegroundColor Yellow
-    
     $adapterObj = Get-NetAdapter -Physical | Where-Object Status -eq "Up" | Select-Object -First 1
     if (!$adapterObj) { $adapterObj = Get-NetAdapter | Where-Object Status -eq "Up" | Select-Object -First 1 }
 
     if (!$adapterObj) {
         Write-Host "No active network adapter found!" -ForegroundColor Red
-        Pause
-        return
+        return $null
     }
-
-    $adapter = $adapterObj.Name
-    Write-Host "Targeting Adapter: $adapter" -ForegroundColor Cyan
-    Write-Host "--------------------------------"
-
-    Write-Host "1) Cloudflare (1.1.1.1)"
-    Write-Host "2) Google (8.8.8.8)"
-    Write-Host "3) Quad9 (9.9.9.9)"
-    Write-Host "4) OpenDNS (208.67.222.222)"
-    Write-Host "5) Reset to ISP DNS"
-    
-    $choice = Read-Host "Select"
-    
-    switch($choice){
-        "1" { Set-DnsClientServerAddress -InterfaceAlias $adapter -ServerAddresses ("1.1.1.1", "1.0.0.1") }
-        "2" { Set-DnsClientServerAddress -InterfaceAlias $adapter -ServerAddresses ("8.8.8.8", "8.8.4.4") }
-        "3" { Set-DnsClientServerAddress -InterfaceAlias $adapter -ServerAddresses ("9.9.9.9", "149.112.112.112") }
-        "4" { Set-DnsClientServerAddress -InterfaceAlias $adapter -ServerAddresses ("208.67.222.222", "208.67.220.220") }
-        "5" { Set-DnsClientServerAddress -InterfaceAlias $adapter -ResetServerAddresses }
-        default { Write-Host "Invalid option." -ForegroundColor Red; Pause; return }
-    }
-    Write-Host "DNS Updated." -ForegroundColor Green
-    Pause
+    return $adapterObj.Name
 }
 
-# ------------------------------
-#        Extra Debloater (Aggressive) (No Change)
-# ------------------------------
-function LT-ExtraDebloat {
+function LT-PingDNS($ip) {
+    try {
+        $result = Test-NetConnection -ComputerName $ip -Port 53 -InformationLevel Detailed -Count 4 -ErrorAction Stop
+        # Calculate average response time, ignoring errors if some pings fail
+        $avgResponse = ($result | Where-Object { $_.PingSucceeded -eq $True } | Measure-Object -Property ResponseTime -Average).Average
+        if ($avgResponse) {
+            return [int]$avgResponse
+        } else {
+            return 9999 # Max value for unreachable servers
+        }
+    }
+    catch {
+        return 9999
+    }
+}
+
+function LT-TestFastestDNS {
     LT-Header
-    Write-Host "WARNING: This Mode is AGGRESSIVE." -ForegroundColor Red
-    Write-Host "It will remove: Calculator, Photos, Camera, Voice Recorder, etc."
-    Write-Host "Are you sure? (Y/N)" -ForegroundColor Yellow
-    $confirm = Read-Host ""
+    Write-Host "TESTING DNS LATENCY..." -ForegroundColor Cyan
     
-    if ($confirm -ne "Y" -and $confirm -ne "y") { 
-        Write-Host "Aggressive Debloat aborted." -ForegroundColor DarkYellow
-        Pause
-        return 
-    }
-
-    Write-Host "Applying aggressive debloat..." -ForegroundColor Yellow
-
-    $extraBloat = @(
-        "Microsoft.ZuneMusic", "Microsoft.ZuneVideo", "Microsoft.SkypeApp",
-        "Microsoft.WindowsAlarms", "Microsoft.WindowsCalculator",
-        "Microsoft.WindowsCamera", "Microsoft.WindowsMaps", "Microsoft.WindowsSoundRecorder",
-        "Microsoft.WindowsFeedbackHub", "Microsoft.MSPaint", "Microsoft.Office.OneNote", 
-        "Microsoft.WindowsPhotos"
+    $dnsServers = @(
+        @{Name="Cloudflare"; Primary="1.1.1.1"; Secondary="1.0.0.1"},
+        @{Name="Google"; Primary="8.8.8.8"; Secondary="8.8.4.4"},
+        @{Name="Quad9"; Primary="9.9.9.9"; Secondary="149.112.112.112"},
+        @{Name="OpenDNS"; Primary="208.67.222.222"; Secondary="208.67.220.220"}
     )
-    foreach ($app in $extraBloat) { Get-AppxPackage -Name $app -AllUsers | Remove-AppxPackage -ErrorAction SilentlyContinue }
-
-    # Visual Tweaks
-    Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "MenuShowDelay" -Value 100 -ErrorAction SilentlyContinue
-    Set-ItemProperty -Path "HKCU:\Control Panel\Desktop\WindowMetrics" -Name "MinAnimate" -Value 0 -ErrorAction SilentlyContinue
-
-    Write-Host "Aggressive tweaks applied." -ForegroundColor Green
-    Pause 
-}
-
-# ------------------------------
-#            MAIN LOOP
-# ------------------------------
-do {
-    LT-Menu
-    $choice = Read-Host "Select an option"
-    switch ($choice) {
-        "1" { LT-SystemInfo }
-        "2" { LT-CleanTemp }
-        "3" { LT-StartupOptimizer }
-        "4" { LT-ToggleTheme }
-        "5" { LT-RestorePoint }
-        "6" { LT-NetworkReset }
-        "7" { LT-InternetOptimize }
-        "8" { LT-Latency }
-        "9" { LT-DNSChanger }
-        "10" { LT-ServiceOptimize }
-        "11" { LT-RepairTools }
-        "12" { LT-Debloat }
-        "13" { LT-FPSBoost }
-        "14" { LT-ExtraDebloat }
-        "15" { LT-ProcessReducer }
-        "16" { LT-MemoryOptimizer }
-        "17" { LT-ExtraSafeTweaks }
-        "18" { LT-InputLatencyFix }
-        "19" { LT-Update }
-        "20" { Write-Host "Exiting THVO Tweaker..." -ForegroundColor Cyan; Start-Sleep 1 }
-        default { Write-Host "Invalid selection." -ForegroundColor Red; Start-Sleep 1 }
+    
+    $results = @()
+    
+    foreach ($server in $dnsServers) {
+        Write-Host "  Testing $($server.Name)..." -ForegroundColor Yellow
+        $ping = LT-PingDNS($server.Primary)
+        $results += @{Name=$server.Name; Primary=$server.Primary; Secondary=$server.Secondary; Latency=$ping}
     }
-} while ($choice -ne 20)
+    
+    $fastest = $results | Sort-Object Latency | Select-Object -First 1
+    
+    Write-Host "`n--- RESULTS (Average Ping) ---" -ForegroundColor Gray
+    $results | Sort-Object Latency | Format-Table Name, Latency -AutoSize
+    
+    if ($fastest.Latency -lt 9999) {
+        Write-Host "`n✅ The fastest server is $($fastest.Name) with a latency of $($fastest.Latency) ms." -ForegroundColor Green
+        Write-Host "   Primary: $($fastest.Primary), Secondary: $($fastest.Secondary)"
+        
+        $choice
