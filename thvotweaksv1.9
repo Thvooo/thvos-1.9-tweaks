@@ -1,6 +1,6 @@
 # ===========================================
-#       LIQUID TECH PC Tweaker v2.2
-#    FORCED REGISTRY ACCESS for Input Fix
+#       LIQUID TECH PC Tweaker v2.3
+#    FINAL REGISTRY ACCESS FIX (Direct Set)
 # ===========================================
 
 # --- SELF-ELEVATION CHECK ---
@@ -10,7 +10,7 @@ if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]:
     Exit
 }
 
-$LTVersion = "2.2"   
+$LTVersion = "2.3"   
 $LTRepoURL = "https://raw.githubusercontent.com/YOURNAME/YOURREPO/main/LiquidTechTweaker.ps1"
 
 # ------------------------------
@@ -35,7 +35,7 @@ function LT-Header {
 }
 
 # ------------------------------
-#        Auto Updater
+#        Auto Updater (No Change)
 # ------------------------------
 function LT-Update {
     LT-Header
@@ -59,7 +59,7 @@ function LT-Update {
 }
 
 # ------------------------------
-#            Menu
+#            Menu (No Change)
 # ------------------------------
 function LT-Menu {
     LT-Header
@@ -294,29 +294,25 @@ function LT-InputLatencyFix {
     Write-Host "Applying verified registry tweaks to reduce input processing delays." -ForegroundColor Gray
     Write-Host ""
 
-    # 1. Mouse/Keyboard Input Queue Reduction (FORCED ACCESS using Reg.exe)
-    Write-Host "Applying Low Latency Input Queue Tweak (Forcing access via Reg.exe)..." -ForegroundColor Yellow
+    # 1. Mouse/Keyboard Input Queue Reduction (FINAL FIX: Set value directly on Class key)
+    Write-Host "Applying Low Latency Input Queue Tweak (Directly setting value on Class keys)..." -ForegroundColor Yellow
     
     # Mouse Class GUID
-    $mouseQueuePathBase = "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e96f-e325-11ce-bfc1-08002be10318}"
+    $mouseQueuePathBase = "HKLM:\SYSTEM\CurrentControlSet\Control\Class\{4d36e96f-e325-11ce-bfc1-08002be10318}"
     # Keyboard Class GUID
-    $keyboardQueuePathBase = "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e96b-e325-11ce-bfc1-08002be10318}"
+    $keyboardQueuePathBase = "HKLM:\SYSTEM\CurrentControlSet\Control\Class\{4d36e96b-e325-11ce-bfc1-08002be10318}"
 
     $paths = @($mouseQueuePathBase, $keyboardQueuePathBase)
     
     foreach ($path in $paths) {
-        # Use Reg Query to find all subkeys (0000, 0001, etc.)
-        $subkeys = (reg query $path /s 2>$null | Select-String -Pattern "HKEY_LOCAL_MACHINE").Line
-        
-        foreach ($subkey in $subkeys) {
-            # Extract the subkey path (e.g., ...\{GUID}\0000)
-            $subkey = $subkey.Split(" ")[-1]
-
-            # Use Reg Add to force the MaxInputDataQueueLength value
-            $command = "reg add `"$subkey`" /v MaxInputDataQueueLength /t REG_DWORD /d 20 /f"
-            Invoke-Expression $command | Out-Null
+        # Use New-ItemProperty directly on the class key. This usually bypasses the security
+        # restrictions on the driver subkeys, and modern drivers are designed to inherit it.
+        try {
+            New-ItemProperty -Path $path -Name "MaxInputDataQueueLength" -Value 20 -PropertyType DWord -Force -ErrorAction Stop | Out-Null
+            Write-Host "  Successfully set value on $path" -ForegroundColor DarkGreen
+        } catch {
+            Write-Host "  ERROR: Failed to set value directly on $path. You may need to manually take ownership of this key." -ForegroundColor Red
         }
-        Write-Host "  Applied to $path..." -ForegroundColor DarkGray
     }
 
 
