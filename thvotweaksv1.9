@@ -1,6 +1,6 @@
 # ===========================================
-#       LIQUID TECH PC Tweaker v2.3
-#    FINAL REGISTRY ACCESS FIX (Direct Set)
+#       LIQUID TECH PC Tweaker v2.7
+#    Deep Process and Service Reduction
 # ===========================================
 
 # --- SELF-ELEVATION CHECK ---
@@ -10,7 +10,7 @@ if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]:
     Exit
 }
 
-$LTVersion = "2.3"   
+$LTVersion = "2.7"   
 $LTRepoURL = "https://raw.githubusercontent.com/YOURNAME/YOURREPO/main/LiquidTechTweaker.ps1"
 
 # ------------------------------
@@ -77,15 +77,17 @@ function LT-Menu {
     Write-Host "   9) DNS Changer"
 
     Write-Host "`n  [ PERFORMANCE ]" -ForegroundColor Cyan
-    Write-Host "   10) Safe Windows Services Optimization"
+    Write-Host "   10) Windows Services Optimization (Expanded Services!)"
     Write-Host "   11) Repair Windows Components (DISM/SFC)"
     Write-Host "   12) Debloater (Safe Apps Only)"
     Write-Host "   13) FPS Booster (Advanced + Power Fix)"
     Write-Host "   14) Extra Debloater (Aggressive)"
-    Write-Host "   15) Smart Process Reducer"
+
+
+    Write-Host "   15) Smart Process Reducer (Superfetch/Error Fix!)"
     Write-Host "   16) Virtual Memory Optimizer"
     Write-Host "   17) Extra Safe Tweaks"
-    Write-Host "   18) Input Latency Fix (Fixed Registry Access!)"
+    Write-Host "   18) Input Latency Fix (Expanded KBM Tweaks!)"
 
 
     Write-Host "`n  [ OTHER ]" -ForegroundColor Cyan
@@ -156,51 +158,101 @@ function LT-RestorePoint {
     Pause
 }
 
+# ------------------------------
+#      Windows Services Optimization (EXPANDED)
+# ------------------------------
 function LT-ServiceOptimize {
     LT-Header
-    Write-Host "Optimizing Standard Services..."
-    $services = @("DiagTrack","dmwappushservice","MapsBroker","lfsvc","RetailDemo")
-    foreach ($svc in $services) { 
+    Write-Host "Optimizing Windows Services (Disabling Non-Essential)..."
+    
+    # Expanded list of non-essential services to disable
+    $servicesToDisable = @(
+        "DiagTrack",          # Connected User Experiences and Telemetry
+        "dmwappushservice",   # WAP Push Message Routing Service
+        "MapsBroker",         # Downloaded Maps Manager
+        "lfsvc",              # Geolocation Service
+        "RetailDemo",         # Retail Demo Service
+        "RemoteRegistry",     # Remote Registry (Security Risk)
+        "SharedAccess",       # Internet Connection Sharing (ICS)
+        "TabletInputService", # Tablet and Pen Input Service (If no touch/pen)
+        "TrkWks",             # Distributed Link Tracking Client
+        "XblAuthManager",     # Xbox Live Auth Manager
+        "XblGameSave",        # Xbox Live Game Save
+        "XboxNetApiSvc"       # Xbox Live Networking Service
+    )
+    
+    foreach ($svc in $servicesToDisable) { 
         if (Get-Service -Name $svc -ErrorAction SilentlyContinue) { 
             Set-Service -Name $svc -StartupType Disabled 
             Stop-Service -Name $svc -ErrorAction SilentlyContinue
             Write-Host "Disabled: $svc" -ForegroundColor Gray
         } 
     }
-    Write-Host "Safe service tweaks applied." -ForegroundColor Green
+    Write-Host "Expanded service tweaks applied. Reboot is recommended for full effect." -ForegroundColor Green
     Pause
 }
 
 # ------------------------------
-#      Smart Process Reducer (No Change)
+#      Smart Process Reducer (EXPANDED)
 # ------------------------------
 function LT-ProcessReducer {
     LT-Header
     Write-Host "SMART PROCESS REDUCER" -ForegroundColor Cyan
-    Write-Host "This module reduces background noise by disabling unused hardware services." -ForegroundColor Gray
+    Write-Host "Disabling background tasks including SysMain, Error Reporting, and Virtual Printers." -ForegroundColor Gray
     Write-Host ""
 
+    # NEW: Disable SysMain (Superfetch)
+    Write-Host "Disabling SysMain (Superfetch) service..." -ForegroundColor Yellow
+    Stop-Service "SysMain" -ErrorAction SilentlyContinue
+    Set-Service "SysMain" -StartupType Disabled -ErrorAction SilentlyContinue
+
+    # NEW: Disable Windows Error Reporting Service
+    Write-Host "Disabling Windows Error Reporting (WerSvc)..." -ForegroundColor Yellow
+    Stop-Service "WerSvc" -ErrorAction SilentlyContinue
+    Set-Service "WerSvc" -StartupType Disabled -ErrorAction SilentlyContinue
+
+
     # 1. Printer Check
-    $print = Read-Host "Do you use a Printer? (Y/N)"
+    $print = Read-Host "Do you use a Physical Printer? (Y/N)"
     if ($print -eq "N" -or $print -eq "n") {
         Write-Host "Disabling Print Spooler..." -ForegroundColor Yellow
         Stop-Service "Spooler" -ErrorAction SilentlyContinue
-        Set-Service "Spooler" -StartupType Disabled
+        Set-Service "Spooler" -StartupType Disabled -ErrorAction SilentlyContinue
     }
+    
+    # Disable virtual/software printers
+    Write-Host "Disabling Virtual Printers (PDF, XPS)..." -ForegroundColor Yellow
+    $virtualPrinters = @(
+        "Microsoft XPS Document Writer", 
+        "Microsoft Print to PDF"
+    )
+    foreach ($vp in $virtualPrinters) {
+        Write-Host "  Removing virtual printer: $vp" -ForegroundColor DarkGray
+        (Get-WmiObject -Class Win32_Printer | Where-Object {$_.Name -eq $vp}) | Remove-WmiObject -ErrorAction SilentlyContinue
+    }
+
+    # Disable Fax Service
+    $fax = Read-Host "Do you use a Fax Machine? (Y/N)"
+    if ($fax -eq "N" -or $fax -eq "n") {
+        Write-Host "Disabling Fax Service..." -ForegroundColor Yellow
+        Stop-Service "Fax" -ErrorAction SilentlyContinue
+        Set-Service "Fax" -StartupType Disabled -ErrorAction SilentlyContinue
+    }
+
 
     # 2. Bluetooth Check
     $bt = Read-Host "Do you use Bluetooth? (Y/N)"
     if ($bt -eq "N" -or $bt -eq "n") {
         Write-Host "Disabling Bluetooth Services..." -ForegroundColor Yellow
-        $btServices = @("bthserv", "BthHFSrv")
+        $btServices = @("bthserv", "BthHFSrv") 
         foreach ($s in $btServices) {
             Stop-Service $s -ErrorAction SilentlyContinue
-            Set-Service $s -StartupType Disabled
+            Set-Service $s -StartupType Disabled -ErrorAction SilentlyContinue
         }
     }
 
     # 3. Disable Background Apps (Global)
-    Write-Host "Disabling background app execution..." -ForegroundColor Yellow
+    Write-Host "Disabling global background app execution..." -ForegroundColor Yellow
     New-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" -Name "GlobalUserDisabled" -Value 1 -PropertyType DWord -Force | Out-Null
     New-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search" -Name "BackgroundAppGlobalToggle" -Value 0 -PropertyType DWord -Force | Out-Null
 
@@ -211,7 +263,7 @@ function LT-ProcessReducer {
         Stop-Process -Name $proc -Force -ErrorAction SilentlyContinue
     }
 
-    Write-Host "Process optimization complete!" -ForegroundColor Green
+    Write-Host "Process optimization complete! A reboot is recommended." -ForegroundColor Green
     Pause
 }
 
@@ -286,7 +338,7 @@ function LT-ExtraSafeTweaks {
 }
 
 # ------------------------------
-#      Input Latency Fix (FIXED REGISTRY ACCESS)
+#      Input Latency Fix (No Change)
 # ------------------------------
 function LT-InputLatencyFix {
     LT-Header
@@ -294,7 +346,7 @@ function LT-InputLatencyFix {
     Write-Host "Applying verified registry tweaks to reduce input processing delays." -ForegroundColor Gray
     Write-Host ""
 
-    # 1. Mouse/Keyboard Input Queue Reduction (FINAL FIX: Set value directly on Class key)
+    # 1. Mouse/Keyboard Input Queue Reduction 
     Write-Host "Applying Low Latency Input Queue Tweak (Directly setting value on Class keys)..." -ForegroundColor Yellow
     
     # Mouse Class GUID
@@ -305,18 +357,26 @@ function LT-InputLatencyFix {
     $paths = @($mouseQueuePathBase, $keyboardQueuePathBase)
     
     foreach ($path in $paths) {
-        # Use New-ItemProperty directly on the class key. This usually bypasses the security
-        # restrictions on the driver subkeys, and modern drivers are designed to inherit it.
         try {
             New-ItemProperty -Path $path -Name "MaxInputDataQueueLength" -Value 20 -PropertyType DWord -Force -ErrorAction Stop | Out-Null
             Write-Host "  Successfully set value on $path" -ForegroundColor DarkGreen
         } catch {
-            Write-Host "  ERROR: Failed to set value directly on $path. You may need to manually take ownership of this key." -ForegroundColor Red
+            Write-Host "  ERROR: Failed to set value directly on $path. (Access is denied)" -ForegroundColor Red
         }
+    }
+    
+    # 2. Force Feedback Desktop Delay Reduction (Affects gaming input buffer)
+    Write-Host "Applying Force Feedback Delay Reduction (Low-latency gaming input)..." -ForegroundColor Yellow
+    $ffRegPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp"
+    try {
+        New-ItemProperty -Path $ffRegPath -Name "ForceFeedbackDesktop" -Value 0 -PropertyType DWord -Force -ErrorAction Stop | Out-Null
+        Write-Host "  Successfully set ForceFeedbackDesktop to 0" -ForegroundColor DarkGreen
+    } catch {
+        Write-Host "  ERROR: Failed to set ForceFeedbackDesktop value." -ForegroundColor Red
     }
 
 
-    # 2. DISABLE Mouse Acceleration (Enhanced Pointer Precision)
+    # 3. DISABLE Mouse Acceleration (Enhanced Pointer Precision)
     Write-Host "Disabling Enhanced Pointer Precision (Mouse Acceleration)..." -ForegroundColor Yellow
     $mouseReg = "HKCU:\Control Panel\Mouse"
     
@@ -325,7 +385,7 @@ function LT-InputLatencyFix {
     Set-ItemProperty -Path $mouseReg -Name "MouseSpeed" -Value 1 -Type String -Force | Out-Null 
     Set-ItemProperty -Path $mouseReg -Name "MouseAcceleration" -Value 0 -Type String -Force | Out-Null
 
-    # 3. Keyboard Repeat Rate Fix (Minimum delay/Maximum repeat speed)
+    # 4. Keyboard Repeat Rate Fix (Minimum delay/Maximum repeat speed)
     Write-Host "Setting Keyboard Repeat Rate to Max Speed..." -ForegroundColor Yellow
     $keyboardReg = "HKCU:\Control Panel\Keyboard"
     Set-ItemProperty -Path $keyboardReg -Name "KeyboardDelay" -Value 0 -Type String -Force | Out-Null # Minimum delay (0-3)
@@ -377,7 +437,6 @@ function LT-Debloat {
         "Microsoft.Getstarted", "Microsoft.MicrosoftSolitaireCollection"
     )
     foreach ($app in $bloat) { 
-        Write-Host "Removing $app..." -ForegroundColor DarkGray
         Get-AppxPackage -Name $app -AllUsers | Remove-AppxPackage -ErrorAction SilentlyContinue 
     }
     Write-Host "Debloating complete." -ForegroundColor Green
@@ -494,7 +553,12 @@ function LT-ExtraDebloat {
     Write-Host "It will remove: Calculator, Photos, Camera, Voice Recorder, etc."
     Write-Host "Are you sure? (Y/N)" -ForegroundColor Yellow
     $confirm = Read-Host ""
-    if ($confirm -ne "Y" -and $confirm -ne "y") { return }
+    
+    if ($confirm -ne "Y" -and $confirm -ne "y") { 
+        Write-Host "Aggressive Debloat aborted." -ForegroundColor DarkYellow
+        Pause
+        return 
+    }
 
     Write-Host "Applying aggressive debloat..." -ForegroundColor Yellow
 
@@ -507,11 +571,12 @@ function LT-ExtraDebloat {
     )
     foreach ($app in $extraBloat) { Get-AppxPackage -Name $app -AllUsers | Remove-AppxPackage -ErrorAction SilentlyContinue }
 
+    # Visual Tweaks
     Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "MenuShowDelay" -Value 100 -ErrorAction SilentlyContinue
     Set-ItemProperty -Path "HKCU:\Control Panel\Desktop\WindowMetrics" -Name "MinAnimate" -Value 0 -ErrorAction SilentlyContinue
 
     Write-Host "Aggressive tweaks applied." -ForegroundColor Green
-    Pause
+    Pause 
 }
 
 # ------------------------------
