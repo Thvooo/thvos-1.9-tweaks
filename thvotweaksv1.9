@@ -1,6 +1,6 @@
 # ===========================================
-#       LIQUID TECH PC Tweaker v2.7
-#    Deep Process and Service Reduction
+#       LIQUID TECH PC Tweaker v2.8
+#    Expanded KBM and Internet Tweaks
 # ===========================================
 
 # --- SELF-ELEVATION CHECK ---
@@ -10,7 +10,7 @@ if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]:
     Exit
 }
 
-$LTVersion = "2.7"   
+$LTVersion = "2.8"   
 $LTRepoURL = "https://raw.githubusercontent.com/YOURNAME/YOURREPO/main/LiquidTechTweaker.ps1"
 
 # ------------------------------
@@ -72,8 +72,8 @@ function LT-Menu {
     
     Write-Host "`n  [ NETWORK ]" -ForegroundColor Cyan
     Write-Host "   6) Basic Network Reset"
-    Write-Host "   7) Internet Optimizer"
-    Write-Host "   8) Latency Optimizer (Network)"
+    Write-Host "   7) Internet Optimizer (Network Throttling Fix!)"
+    Write-Host "   8) Latency Optimizer (Disable Nagle's Algorithm!)"
     Write-Host "   9) DNS Changer"
 
     Write-Host "`n  [ PERFORMANCE ]" -ForegroundColor Cyan
@@ -87,7 +87,7 @@ function LT-Menu {
     Write-Host "   15) Smart Process Reducer (Superfetch/Error Fix!)"
     Write-Host "   16) Virtual Memory Optimizer"
     Write-Host "   17) Extra Safe Tweaks"
-    Write-Host "   18) Input Latency Fix (Expanded KBM Tweaks!)"
+    Write-Host "   18) Input Latency Fix (Mouse Interrupt Tweak!)"
 
 
     Write-Host "`n  [ OTHER ]" -ForegroundColor Cyan
@@ -159,7 +159,7 @@ function LT-RestorePoint {
 }
 
 # ------------------------------
-#      Windows Services Optimization (EXPANDED)
+#      Windows Services Optimization (No Change)
 # ------------------------------
 function LT-ServiceOptimize {
     LT-Header
@@ -193,7 +193,7 @@ function LT-ServiceOptimize {
 }
 
 # ------------------------------
-#      Smart Process Reducer (EXPANDED)
+#      Smart Process Reducer (No Change)
 # ------------------------------
 function LT-ProcessReducer {
     LT-Header
@@ -201,12 +201,12 @@ function LT-ProcessReducer {
     Write-Host "Disabling background tasks including SysMain, Error Reporting, and Virtual Printers." -ForegroundColor Gray
     Write-Host ""
 
-    # NEW: Disable SysMain (Superfetch)
+    # Disable SysMain (Superfetch)
     Write-Host "Disabling SysMain (Superfetch) service..." -ForegroundColor Yellow
     Stop-Service "SysMain" -ErrorAction SilentlyContinue
     Set-Service "SysMain" -StartupType Disabled -ErrorAction SilentlyContinue
 
-    # NEW: Disable Windows Error Reporting Service
+    # Disable Windows Error Reporting Service
     Write-Host "Disabling Windows Error Reporting (WerSvc)..." -ForegroundColor Yellow
     Stop-Service "WerSvc" -ErrorAction SilentlyContinue
     Set-Service "WerSvc" -StartupType Disabled -ErrorAction SilentlyContinue
@@ -338,7 +338,7 @@ function LT-ExtraSafeTweaks {
 }
 
 # ------------------------------
-#      Input Latency Fix (No Change)
+#      Input Latency Fix (EXPANDED KBM)
 # ------------------------------
 function LT-InputLatencyFix {
     LT-Header
@@ -347,7 +347,7 @@ function LT-InputLatencyFix {
     Write-Host ""
 
     # 1. Mouse/Keyboard Input Queue Reduction 
-    Write-Host "Applying Low Latency Input Queue Tweak (Directly setting value on Class keys)..." -ForegroundColor Yellow
+    Write-Host "Applying Low Latency Input Queue Tweak (Class keys)..." -ForegroundColor Yellow
     
     # Mouse Class GUID
     $mouseQueuePathBase = "HKLM:\SYSTEM\CurrentControlSet\Control\Class\{4d36e96f-e325-11ce-bfc1-08002be10318}"
@@ -359,9 +359,9 @@ function LT-InputLatencyFix {
     foreach ($path in $paths) {
         try {
             New-ItemProperty -Path $path -Name "MaxInputDataQueueLength" -Value 20 -PropertyType DWord -Force -ErrorAction Stop | Out-Null
-            Write-Host "  Successfully set value on $path" -ForegroundColor DarkGreen
+            Write-Host "  Successfully set MaxInputDataQueueLength on $path" -ForegroundColor DarkGreen
         } catch {
-            Write-Host "  ERROR: Failed to set value directly on $path. (Access is denied)" -ForegroundColor Red
+            Write-Host "  ERROR: Failed to set MaxInputDataQueueLength on $path. (Access is denied)" -ForegroundColor Red
         }
     }
     
@@ -375,8 +375,18 @@ function LT-InputLatencyFix {
         Write-Host "  ERROR: Failed to set ForceFeedbackDesktop value." -ForegroundColor Red
     }
 
+    # 3. NEW: Mouse Interrupt Priority (Increases mouse interrupt handling speed)
+    Write-Host "Setting Mouse Interrupt Priority to high..." -ForegroundColor Yellow
+    $mouseInterruptPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon"
+    try {
+        New-ItemProperty -Path $mouseInterruptPath -Name "SaturatedWriteWhenMiceOrKeyboardsAreUsed" -Value 1 -PropertyType DWord -Force -ErrorAction Stop | Out-Null
+        Write-Host "  Successfully set SaturatedWriteWhenMiceOrKeyboardsAreUsed to 1" -ForegroundColor DarkGreen
+    } catch {
+        Write-Host "  ERROR: Failed to set Mouse Interrupt Priority value." -ForegroundColor Red
+    }
 
-    # 3. DISABLE Mouse Acceleration (Enhanced Pointer Precision)
+
+    # 4. DISABLE Mouse Acceleration (Enhanced Pointer Precision)
     Write-Host "Disabling Enhanced Pointer Precision (Mouse Acceleration)..." -ForegroundColor Yellow
     $mouseReg = "HKCU:\Control Panel\Mouse"
     
@@ -385,7 +395,7 @@ function LT-InputLatencyFix {
     Set-ItemProperty -Path $mouseReg -Name "MouseSpeed" -Value 1 -Type String -Force | Out-Null 
     Set-ItemProperty -Path $mouseReg -Name "MouseAcceleration" -Value 0 -Type String -Force | Out-Null
 
-    # 4. Keyboard Repeat Rate Fix (Minimum delay/Maximum repeat speed)
+    # 5. Keyboard Repeat Rate Fix (Minimum delay/Maximum repeat speed)
     Write-Host "Setting Keyboard Repeat Rate to Max Speed..." -ForegroundColor Yellow
     $keyboardReg = "HKCU:\Control Panel\Keyboard"
     Set-ItemProperty -Path $keyboardReg -Name "KeyboardDelay" -Value 0 -Type String -Force | Out-Null # Minimum delay (0-3)
@@ -398,17 +408,26 @@ function LT-InputLatencyFix {
 
 
 # ------------------------------
-#        Internet Optimizer (No Change)
+#        Internet Optimizer (EXPANDED)
 # ------------------------------
 function LT-InternetOptimize {
     LT-Header
-    Write-Host "Optimizing TCP/IP Stack..." -ForegroundColor Yellow
+    Write-Host "Optimizing TCP/IP Stack and Network Throttling..." -ForegroundColor Yellow
+    
     ipconfig /flushdns | Out-Null
     netsh winsock reset | Out-Null
     netsh int ip reset | Out-Null
+    
+    # Default recommended TCP settings
     netsh interface tcp set global autotuninglevel=normal | Out-Null
     netsh interface tcp set global congestionprovider=ctcp | Out-Null
-    Write-Host "Internet optimization complete." -ForegroundColor Green
+    
+    # NEW: Disable Network Throttling (improves bandwidth for background apps/games)
+    Write-Host "Disabling Network Throttling..." -ForegroundColor Cyan
+    $regPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile"
+    New-ItemProperty -Path $regPath -Name "NetworkThrottlingIndex" -Value 0 -PropertyType DWord -Force | Out-Null
+    
+    Write-Host "Internet optimization complete. Reboot for best effect." -ForegroundColor Green
     Pause
 }
 
@@ -492,15 +511,28 @@ function LT-FPSBoost {
 }
 
 # ------------------------------
-#        Latency Optimizer (Network) (No Change)
+#        Latency Optimizer (EXPANDED)
 # ------------------------------
 function LT-Latency {
     LT-Header
     Write-Host "Applying Low Latency Network Tweaks..." -ForegroundColor Yellow
+    
+    # Default low latency network tweaks
     netsh int tcp set global autotuninglevel=normal | Out-Null
     netsh int tcp set global ecncapability=disabled | Out-Null
     netsh int tcp set global rss=enabled | Out-Null
-    Write-Host "Network latency optimized." -ForegroundColor Green
+    
+    # NEW: Disable Nagle's Algorithm (Crucial for low latency gaming/VOIP)
+    Write-Host "Disabling Nagle's Algorithm for lower latency..." -ForegroundColor Cyan
+    $tcpPath = "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces"
+    
+    # Iterate through all network interfaces
+    Get-ChildItem -Path $tcpPath | ForEach-Object {
+        New-ItemProperty -Path $_.PSPath -Name "TcpNoDelay" -Value 1 -PropertyType DWord -Force | Out-Null
+        New-ItemProperty -Path $_.PSPath -Name "TcpAckFrequency" -Value 1 -PropertyType DWord -Force | Out-Null
+    }
+    
+    Write-Host "Network latency optimized. Reboot recommended." -ForegroundColor Green
     Pause
 }
 
