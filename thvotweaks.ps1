@@ -1,6 +1,6 @@
 # ===========================================
-#       LIQUID TECH PC Tweaker v3.3
-#    Timer Resolution Restored
+#       LIQUID TECH PC Tweaker v3.5
+#    Ultimate Process & Service Killer
 # ===========================================
 
 # --- SELF-ELEVATION CHECK ---
@@ -10,7 +10,7 @@ if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]:
     Exit
 }
 
-$LTVersion = "3.3"   
+$LTVersion = "3.5"   
 # IMPORTANT: Update this URL to point to the raw content of your file on GitHub
 $LTRepoURL = "https://raw.githubusercontent.com/Thvooo/thvos-1.9-tweaks/main/thvotweaks.ps1" 
 
@@ -89,16 +89,17 @@ function LT-Menu {
     Write-Host "   16) Smart Process Reducer (Superfetch/Error Fix!)"
     Write-Host "   17) Deep Process Cleaner (Media/UPnP Services)"
     Write-Host "   18) Extreme Process Purge (Camera/App Experience!)"
-    Write-Host "   19) Virtual Memory Optimizer"
-    Write-Host "   20) Extra Safe Tweaks"
+    Write-Host "   19) Ultimate Bloatware & Telemetry Silencer (NEW!)"
+    Write-Host "   20) Virtual Memory Optimizer"
+    Write-Host "   21) Extra Safe Tweaks"
 
     Write-Host "`n  [ INPUT LATENCY ]" -ForegroundColor Cyan
-    Write-Host "   21) Input Latency Optimizer (Submenu)"
+    Write-Host "   22) Input Latency Optimizer (Submenu)"
 
 
     Write-Host "`n  [ OTHER ]" -ForegroundColor Cyan
-    Write-Host "   22) Check for Updates"
-    Write-Host "   23) Exit"
+    Write-Host "   23) Check for Updates"
+    Write-Host "   24) Exit"
     Write-Host ""
 }
 
@@ -345,6 +346,44 @@ function LT-ExtremeProcessPurge {
 }
 
 # ------------------------------
+#      Ultimate Bloatware Silencer (NEW OPTION 19)
+# ------------------------------
+function LT-UltimateBloatSilencer {
+    LT-Header
+    Write-Host "☠️ ULTIMATE BLOATWARE & TELEMETRY SILENCER" -ForegroundColor Red
+    Write-Host "Disabling heavily entrenched background services (Biometrics, Wallet, Insider, AllJoyn)." -ForegroundColor Gray
+    Write-Host "This will reduce process count significantly." -ForegroundColor Yellow
+    Write-Host ""
+
+    $ultimateServices = @(
+        "WbioSrvc",       # Windows Biometric Service (Fingerprint/Face)
+        "AJRouter",       # AllJoyn Router Service
+        "PhoneSvc",       # Phone Service
+        "WpcMonSvc",      # Parental Controls
+        "CscService",     # Offline Files
+        "icssvc",         # Windows Mobile Hotspot Service
+        "wisvc",          # Windows Insider Service
+        "WalletService",  # Wallet Service
+        "EntAppSvc",      # Enterprise App Management
+        "SensorService",  # Sensor Service (Rotation/Auto-brightness)
+        "SensrSvc",       # Adaptive Brightness
+        "lfsvc"           # Geolocation Service
+    )
+
+    foreach ($svc in $ultimateServices) { 
+        if (Get-Service -Name $svc -ErrorAction SilentlyContinue) { 
+            Stop-Service -Name $svc -Force -ErrorAction SilentlyContinue
+            Set-Service -Name $svc -StartupType Disabled -ErrorAction SilentlyContinue
+            Write-Host "Disabled: $svc" -ForegroundColor Red
+        } 
+    }
+
+    Write-Host "Ultimate silencing complete. Reboot required." -ForegroundColor Green
+    Pause
+}
+
+
+# ------------------------------
 #      Virtual Memory Optimizer 
 # ------------------------------
 function LT-MemoryOptimizer {
@@ -420,18 +459,20 @@ function LT-ExtraSafeTweaks {
 function LT-InputLatencyOptimizerMenu {
     LT-Header
     Write-Host "  [ INPUT LATENCY OPTIMIZER ]" -ForegroundColor Cyan
-    Write-Host "   21.1) Standard Mouse/Keyboard Fixes (Queue, Speed, Acceleration)"
-    Write-Host "   21.2) USB Polling & Interrupt Tweak (Force High Priority)"
-    Write-Host "   21.3) Gaming Input Buffer Reduction (Desktop Composition)"
-    Write-Host "   21.4) Return to Main Menu"
+    Write-Host "   22.1) Standard Mouse/Keyboard Fixes (Queue, Speed, Acceleration)"
+    Write-Host "   22.2) USB Polling & Interrupt Tweak (Force High Priority)"
+    Write-Host "   22.3) Gaming Input Buffer Reduction (Desktop Composition)"
+    Write-Host "   22.4) Advanced Kernel & Thread Priority Tweaks"
+    Write-Host "   22.5) Return to Main Menu"
     Write-Host ""
 
     $subChoice = Read-Host "Select a sub-option"
     switch ($subChoice) {
-        "21.1" { LT-StandardInputFixes }
-        "21.2" { LT-USBPriorityFix }
-        "21.3" { LT-GamingBufferReduce }
-        "21.4" { return }
+        "22.1" { LT-StandardInputFixes }
+        "22.2" { LT-USBPriorityFix }
+        "22.3" { LT-GamingBufferReduce }
+        "22.4" { LT-KernelInputTweaks }
+        "22.5" { return }
         default { Write-Host "Invalid selection." -ForegroundColor Red; Start-Sleep 1 }
     }
     Pause
@@ -535,6 +576,45 @@ function LT-GamingBufferReduce {
     }
     
     Write-Host "Gaming input buffer reductions applied." -ForegroundColor Green
+}
+
+function LT-KernelInputTweaks {
+    LT-Header
+    Write-Host "4. Advanced Kernel & Thread Priority Tweaks" -ForegroundColor Yellow
+
+    # Win32PrioritySeparation (Optimizes foreground application priority)
+    # Value 26 (Hex) is commonly used for performance/responsiveness in games.
+    Write-Host "Optimizing Win32PrioritySeparation (Foreground Priority)..." -ForegroundColor Cyan
+    $priorityControlPath = "HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl"
+    try {
+        New-ItemProperty -Path $priorityControlPath -Name "Win32PrioritySeparation" -Value 38 -PropertyType DWord -Force -ErrorAction Stop | Out-Null # 0x26 = 38 decimal
+        Write-Host "  Set Win32PrioritySeparation to 26 (Hex)" -ForegroundColor DarkGreen
+    } catch {
+        Write-Host "  ERROR: Failed to set Win32PrioritySeparation." -ForegroundColor Red
+    }
+
+    # IRQ8 Priority (System Real Time Clock)
+    # Raising priority of the system clock interrupt can improve timing consistency.
+    Write-Host "Raising IRQ8 (System Clock) Priority..." -ForegroundColor Cyan
+    $irq8Path = "HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl"
+    try {
+        New-ItemProperty -Path $irq8Path -Name "IRQ8Priority" -Value 1 -PropertyType DWord -Force -ErrorAction Stop | Out-Null
+        Write-Host "  Set IRQ8Priority to 1 (High)" -ForegroundColor DarkGreen
+    } catch {
+        Write-Host "  ERROR: Failed to set IRQ8Priority." -ForegroundColor Red
+    }
+
+    # Disable Dynamic Tick (Tickless Kernel)
+    # Forces the system timer to be consistent, preventing it from idling to save power.
+    Write-Host "Disabling Dynamic Tick (Consistent Kernel Timer)..." -ForegroundColor Cyan
+    $bcdResult = bcdedit /set disabledynamictick yes
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "  Dynamic Tick disabled successfully." -ForegroundColor DarkGreen
+    } else {
+        Write-Host "  ERROR: Failed to disable Dynamic Tick." -ForegroundColor Red
+    }
+
+    Write-Host "Advanced kernel input tweaks applied. Reboot REQUIRED." -ForegroundColor Green
 }
 
 
@@ -675,9 +755,35 @@ function LT-VisualOptimize {
 }
 
 # ------------------------------
-#    System Timer Resolution Fix (REMOVED AND REPLACED IN THIS VERSION)
+#    System Timer Resolution Fix 
 # ------------------------------
-# Function Deleted as requested.
+function LT-TimerResolution {
+    LT-Header
+    Write-Host "SYSTEM TIMER RESOLUTION FIX" -ForegroundColor Cyan
+    Write-Host "Optimizing kernel timer to reduce thread scheduling jitter (1ms)." -ForegroundColor Gray
+    Write-Host "Requires a third-party tool to set persistently, but we will fix the registry." -ForegroundColor Yellow
+    Write-Host ""
+    
+    # The registry tweak forces the system to prioritize timer resolution
+    $regPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile"
+    
+    Write-Host "Applying SystemProfile registry tweak..." -ForegroundColor Yellow
+    
+    # Set priority to 'Gaming' or a high priority
+    New-ItemProperty -Path $regPath -Name "SystemResponsiveness" -Value 0 -PropertyType DWord -Force | Out-Null
+    
+    # Create or update the Task folder for high priority threads
+    $taskPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games"
+    if (-not (Test-Path $taskPath)) { New-Item -Path $taskPath -Force | Out-Null }
+    
+    # Set Gaming Profile values
+    New-ItemProperty -Path $taskPath -Name "Scheduling Category" -Value "High" -Force | Out-Null
+    New-ItemProperty -Path $taskPath -Name "Priority" -Value 6 -Type DWord -Force | Out-Null
+    New-ItemProperty -Path $taskPath -Name "SFIO Priority" -Value "High" -Force | Out-Null
+    
+    Write-Host "Timer registry settings applied. You may need to run a 3rd party timer tool (e.g., Timer Resolution) for constant 1ms." -ForegroundColor Green
+    Pause
+}
 
 
 # ------------------------------
@@ -871,14 +977,16 @@ do {
         "12" { LT-Debloat }
         "13" { LT-FPSBoost }
         "14" { LT-VisualOptimize } 
-        "15" { LT-SmartProcessReducer } 
-        "16" { LT-DeepProcessCleaner } 
-        "17" { LT-ExtremeProcessPurge } 
-        "18" { LT-MemoryOptimizer } 
-        "19" { LT-ExtraSafeTweaks } 
-        "20" { LT-InputLatencyOptimizerMenu } 
-        "21" { LT-Update }
-        "22" { Write-Host "Exiting THVO Tweaker..." -ForegroundColor Cyan; Start-Sleep 1 }
+        "15" { LT-TimerResolution } 
+        "16" { LT-SmartProcessReducer }
+        "17" { LT-DeepProcessCleaner } 
+        "18" { LT-ExtremeProcessPurge } 
+        "19" { LT-UltimateBloatSilencer }
+        "20" { LT-MemoryOptimizer } 
+        "21" { LT-ExtraSafeTweaks } 
+        "22" { LT-InputLatencyOptimizerMenu } 
+        "23" { LT-Update }
+        "24" { Write-Host "Exiting THVO Tweaker..." -ForegroundColor Cyan; Start-Sleep 1 }
         default { Write-Host "Invalid selection." -ForegroundColor Red; Start-Sleep 1 }
     }
-} while ($choice -ne 22)
+} while ($choice -ne 24)
