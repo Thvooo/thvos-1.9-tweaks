@@ -1,213 +1,174 @@
-# Set Gaming Profile values
-    New-ItemProperty -Path $taskPath -Name "Scheduling Category" -Value "High" -Force | Out-Null
-    New-ItemProperty -Path $taskPath -Name "Priority" -Value 6 -Type DWord -Force | Out-Null
-    New-ItemProperty -Path $taskPath -Name "SFIO Priority" -Value "High" -Force | Out-Null
-    
-    Write-Host "Timer registry settings applied. You may need to run a 3rd party timer tool (e.g., Timer Resolution) for constant 1ms." -ForegroundColor Green
-    Pause
+# ===========================================
+#       LIQUID TECH PC Tweaker v3.2
+#    Dynamic DNS Optimizer Build
+# ===========================================
+
+# --- SELF-ELEVATION CHECK ---
+if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+    Write-Host "Requesting Administrator privileges..." -ForegroundColor Yellow
+    Start-Process powershell.exe "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs
+    Exit
 }
 
+$LTVersion = "3.2"   
+# IMPORTANT: Update this URL to point to the raw content of your file on GitHub
+$LTRepoURL = "https://raw.githubusercontent.com/Thvooo/thvos-1.9-tweaks/main/thvotweaks.ps1" 
 
 # ------------------------------
-#        Latency Optimizer 
+#       ASCII LOGO (Liquid)
 # ------------------------------
-function LT-Latency {
+$LTLogo = @"
+___________.__                          __                        __            
+\__    ___/|  |_____  ______  ______ _/  |___  _  __ ____ _____  |  |__  ______
+  |    |   |  |  \  \/ /  _ \/  ___/ \   __\ \/ \/ // __ \\__  \ |  |/ / /  ___/
+  |    |   |   Y  \    (  <_> )___ \  |  |  \     /\  ___/ / __ \|    <  \___ \ 
+  |____|   |___|  /\_/ \____/____  >  |__|   \/\_/  \___  >____  /__|_ \/____  >
+                \/               \/                     \/     \/     \/     \/ 
+                          T H V O   T W E A K E R
+"@
+
+function LT-Header {
+    Clear-Host
+    Write-Host $LTLogo -ForegroundColor Cyan
+    Write-Host "Version: $LTVersion | Running as Administrator" -ForegroundColor DarkGray
+    Write-Host "----------------------------------------------------" -ForegroundColor Gray
+    Write-Host ""
+}
+
+# ------------------------------
+#        Auto Updater 
+# ------------------------------
+function LT-Update {
     LT-Header
-    Write-Host "Applying Low Latency Network Tweaks..." -ForegroundColor Yellow
-    
-    # Default low latency network tweaks
-    netsh int tcp set global autotuninglevel=normal | Out-Null
-    netsh int tcp set global ecncapability=disabled | Out-Null
-    netsh int tcp set global rss=enabled | Out-Null
-    
-    # Disable Nagle's Algorithm (Crucial for low latency gaming/VOIP)
-    Write-Host "Disabling Nagle's Algorithm for lower latency..." -ForegroundColor Cyan
-    $tcpPath = "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces"
-    
-    # Iterate through all network interfaces
-    Get-ChildItem -Path $tcpPath | ForEach-Object {
-        New-ItemProperty -Path $_.PSPath -Name "TcpNoDelay" -Value 1 -PropertyType DWord -Force | Out-Null
-        New-ItemProperty -Path $_.PSPath -Name "TcpAckFrequency" -Value 1 -PropertyType DWord -Force | Out-Null
-    }
-    
-    Write-Host "Network latency optimized. Reboot recommended." -ForegroundColor Green
-    Pause
-}
-
-
-# ------------------------------
-#        DNS Changer Module (UPDATED)
-# ------------------------------
-function LT-GetAdapter {
-    Write-Host "Detecting active network adapter..." -ForegroundColor Yellow
-    $adapterObj = Get-NetAdapter -Physical | Where-Object Status -eq "Up" | Select-Object -First 1
-    if (!$adapterObj) { $adapterObj = Get-NetAdapter | Where-Object Status -eq "Up" | Select-Object -First 1 }
-
-    if (!$adapterObj) {
-        Write-Host "No active network adapter found!" -ForegroundColor Red
-        return $null
-    }
-    return $adapterObj.Name
-}
-
-function LT-PingDNS($ip) {
+    Write-Host "Checking for updates..." -ForegroundColor Cyan
     try {
-        $result = Test-NetConnection -ComputerName $ip -Port 53 -InformationLevel Detailed -Count 4 -ErrorAction Stop
-        # Calculate average response time, ignoring errors if some pings fail
-        $avgResponse = ($result | Where-Object { $_.PingSucceeded -eq $True } | Measure-Object -Property ResponseTime -Average).Average
-        if ($avgResponse) {
-            return [int]$avgResponse
-        } else {
-            return 9999 # Max value for unreachable servers
-        }
-    }
-    catch {
-        return 9999
-    }
+        $remote = (iwr -useb $LTRepoURL).Content
+        if ($remote -match '\$LTVersion = "(.+?)"') { $remoteVersion = $matches[1] }
+
+        if ($remoteVersion -gt $LTVersion) {
+            Write-Host "New version available: $remoteVersion" -ForegroundColor Green
+            Write-Host "Updating..." -ForegroundColor Yellow
+            $scriptPath = $MyInvocation.MyCommand.Source
+            iwr -useb $LTRepoURL | Out-File $scriptPath -Force
+            Write-Host "Updated successfully! Restarting..." -ForegroundColor Green
+            Start-Sleep 2
+            powershell -ExecutionPolicy Bypass -File $scriptPath
+            exit
+        } else { Write-Host "You are on the latest version." -ForegroundColor Green }
+    } catch { Write-Host "Update check failed (Check URL/Internet)." -ForegroundColor Red }
+    Pause
 }
 
-function LT-TestFastestDNS {
+# ------------------------------
+#            Menu 
+# ------------------------------
+function LT-Menu {
     LT-Header
-    Write-Host "TESTING DNS LATENCY..." -ForegroundColor Cyan
+    Write-Host "  [ SYSTEM ]" -ForegroundColor Cyan
+    Write-Host "   1) System Info"
+    Write-Host "   2) Clean Temporary Files"
+    Write-Host "   3) Safe Startup Optimizer"
+    Write-Host "   4) Toggle Dark/Light Mode"
+    Write-Host "   5) Create Restore Point"
     
-    $dnsServers = @(
-        @{Name="Cloudflare"; Primary="1.1.1.1"; Secondary="1.0.0.1"},
-        @{Name="Google"; Primary="8.8.8.8"; Secondary="8.8.4.4"},
-        @{Name="Quad9"; Primary="9.9.9.9"; Secondary="149.112.112.112"},
-        @{Name="OpenDNS"; Primary="208.67.222.222"; Secondary="208.67.220.220"}
-    )
-    
-    $results = @()
-    
-    foreach ($server in $dnsServers) {
-        Write-Host "  Testing $($server.Name)..." -ForegroundColor Yellow
-        $ping = LT-PingDNS($server.Primary)
-        $results += @{Name=$server.Name; Primary=$server.Primary; Secondary=$server.Secondary; Latency=$ping}
-    }
-    
-    $fastest = $results | Sort-Object Latency | Select-Object -First 1
-    
-    Write-Host "`n--- RESULTS (Average Ping) ---" -ForegroundColor Gray
-    $results | Sort-Object Latency | Format-Table Name, Latency -AutoSize
-    
-    if ($fastest.Latency -lt 9999) {
-        Write-Host "`n✅ The fastest server is $($fastest.Name) with a latency of $($fastest.Latency) ms." -ForegroundColor Green
-        Write-Host "   Primary: $($fastest.Primary), Secondary: $($fastest.Secondary)"
-        
-        $choice = Read-Host "Apply this DNS server? (Y/N)"
-        if ($choice -eq "Y" -or $choice -eq "y") {
-            return $fastest
-        }
-    } else {
-        Write-Host "❌ Could not determine a fast DNS server. Please check your network connection." -ForegroundColor Red
-    }
-    return $null
+    Write-Host "`n  [ NETWORK ]" -ForegroundColor Cyan
+    Write-Host "   6) Basic Network Reset"
+    Write-Host "   7) Internet Optimizer (Network Throttling Fix!)"
+    Write-Host "   8) Latency Optimizer (Disable Nagle's Algorithm!)"
+    Write-Host "   9) DNS Changer (Auto Test & Select Fastest!)"
+
+    Write-Host "`n  [ PERFORMANCE ]" -ForegroundColor Cyan
+    Write-Host "   10) Windows Services Optimization (Expanded Services!)"
+    Write-Host "   11) Repair Windows Components (DISM/SFC)"
+    Write-Host "   12) Debloater (Safe Apps Only)"
+    Write-Host "   13) FPS Booster (Advanced + Power Fix)"
+    Write-Host "   14) Aggressive Visual Optimization (MAX FPS Tweak)"
+    Write-Host "   15) System Timer Resolution Fix (Thread Priority)"
+
+    Write-Host "`n  [ PROCESS & MEMORY ]" -ForegroundColor Cyan
+    Write-Host "   16) Smart Process Reducer (Superfetch/Error Fix!)"
+    Write-Host "   17) Deep Process Cleaner (Media/UPnP Services)"
+    Write-Host "   18) Extreme Process Purge (Camera/App Experience!)"
+    Write-Host "   19) Virtual Memory Optimizer"
+    Write-Host "   20) Extra Safe Tweaks"
+
+    Write-Host "`n  [ INPUT LATENCY ]" -ForegroundColor Cyan
+    Write-Host "   21) Input Latency Optimizer (Submenu)"
+
+
+    Write-Host "`n  [ OTHER ]" -ForegroundColor Cyan
+    Write-Host "   22) Check for Updates"
+    Write-Host "   23) Exit"
+    Write-Host ""
 }
 
-function LT-DNSChanger {
+# ------------------------------
+#       System Tools 
+# ------------------------------
+function LT-SystemInfo {
     LT-Header
-    $adapter = LT-GetAdapter
-    if (!$adapter) { Pause; return }
+    Write-Host "System Information:`n" -ForegroundColor Yellow
+    Get-ComputerInfo | Select-Object OSName, OSVersion, CsManufacturer, CsModel, CsSystemType, CsRAM, CsNumberOfLogicalProcessors | Format-List
+    Pause
+}
 
-    Write-Host "Targeting Adapter: $adapter" -ForegroundColor Cyan
-    Write-Host "--------------------------------"
-
-    Write-Host "1) Automatically Test and Select Fastest DNS" -ForegroundColor Green
-    Write-Host "2) Cloudflare (1.1.1.1)"
-    Write-Host "3) Google (8.8.8.8)"
-    Write-Host "4) Quad9 (9.9.9.9)"
-    Write-Host "5) OpenDNS (208.67.222.222)"
-    Write-Host "6) Reset to ISP DNS"
-    
-    $choice = Read-Host "Select"
-    
-    $dnsToApply = $null
-    
-    switch($choice){
-        "1" { $dnsToApply = LT-TestFastestDNS }
-        "2" { $dnsToApply = @{Primary="1.1.1.1"; Secondary="1.0.0.1"} }
-        "3" { $dnsToApply = @{Primary="8.8.8.8"; Secondary="8.8.4.4"} }
-        "4" { $dnsToApply = @{Primary="9.9.9.9"; Secondary="149.112.112.112"} }
-        "5" { $dnsToApply = @{Primary="208.67.222.222"; Secondary="208.67.220.220"} }
-        "6" { Set-DnsClientServerAddress -InterfaceAlias $adapter -ResetServerAddresses; Write-Host "DNS Reset to ISP/DHCP." -ForegroundColor Green; Pause; return }
-        default { Write-Host "Invalid option." -ForegroundColor Red; Pause; return }
+function LT-CleanTemp {
+    LT-Header
+    Write-Host "Cleaning temporary files..." -ForegroundColor Yellow
+    $paths = @("$env:TEMP\*", "$env:WINDIR\Temp\*")
+    foreach ($p in $paths) { 
+        Write-Host "Cleaning $p..." -ForegroundColor Gray
+        Remove-Item $p -Recurse -Force -ErrorAction SilentlyContinue 
     }
-    
-    if ($dnsToApply) {
-        Write-Host "Applying DNS: $($dnsToApply.Primary) and $($dnsToApply.Secondary)..." -ForegroundColor Yellow
-        Set-DnsClientServerAddress -InterfaceAlias $adapter -ServerAddresses ($dnsToApply.Primary, $dnsToApply.Secondary)
-        ipconfig /flushdns | Out-Null
-        Write-Host "DNS Updated and flushed." -ForegroundColor Green
+    ipconfig /flushdns | Out-Null
+    Write-Host "Temp files cleaned." -ForegroundColor Green
+    Pause
+}
+
+function LT-StartupOptimizer {
+    LT-Header
+    Write-Host "Startup Programs (View Only):" -ForegroundColor Yellow
+    Get-CimInstance Win32_StartupCommand | Select-Object Name, Command | Format-Table -AutoSize
+    Write-Host "To disable these, use Task Manager (Ctrl+Shift+Esc)" -ForegroundColor DarkGray
+    Pause
+}
+
+function LT-ToggleTheme {
+    $regPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
+    $current = (Get-ItemProperty -Path $regPath -Name AppsUseLightTheme).AppsUseLightTheme
+    Set-ItemProperty -Path $regPath -Name AppsUseLightTheme -Value ($current -bxor 1)
+    Set-ItemProperty -Path $regPath -Name SystemUsesLightTheme -Value ($current -bxor 1)
+    Write-Host "Theme toggled." -ForegroundColor Green
+    Pause
+}
+
+function LT-NetworkReset {
+    LT-Header
+    Write-Host "Resetting Network Stack..." -ForegroundColor Yellow
+    ipconfig /flushdns | Out-Null
+    netsh winsock reset | Out-Null
+    netsh int ip reset | Out-Null
+    Write-Host "Network reset complete." -ForegroundColor Green
+    Pause
+}
+
+function LT-RestorePoint {
+    LT-Header
+    Write-Host "Creating Restore Point..." -ForegroundColor Yellow
+    try {
+        Checkpoint-Computer -Description "LiquidTech Restore Point" -RestorePointType "MODIFY_SETTINGS" -ErrorAction Stop
+        Write-Host "Restore Point created successfully." -ForegroundColor Green
+    } catch {
+        Write-Host "Failed to create Restore Point. Enable System Protection first." -ForegroundColor Red
     }
     Pause
 }
 
-
 # ------------------------------
-#        Extra Debloater (Aggressive) 
+#      Windows Services Optimization 
 # ------------------------------
-function LT-ExtraDebloat {
+function LT-ServiceOptimize {
     LT-Header
-    Write-Host "WARNING: This Mode is AGGRESSIVE." -ForegroundColor Red
-    Write-Host "It will remove: Calculator, Photos, Camera, Voice Recorder, etc."
-    Write-Host "Are you sure? (Y/N)" -ForegroundColor Yellow
-    $confirm = Read-Host ""
+    Write-Host "Optimizing Windows Services (Disabling Non-Essential)..."
     
-    if ($confirm -ne "Y" -and $confirm -ne "y") { 
-        Write-Host "Aggressive Debloat aborted." -ForegroundColor DarkYellow
-        Pause
-        return 
-    }
-
-    Write-Host "Applying aggressive debloat..." -ForegroundColor Yellow
-
-    $extraBloat = @(
-        "Microsoft.ZuneMusic", "Microsoft.ZuneVideo", "Microsoft.SkypeApp",
-        "Microsoft.WindowsAlarms", "Microsoft.WindowsCalculator",
-        "Microsoft.WindowsCamera", "Microsoft.WindowsMaps", "Microsoft.WindowsSoundRecorder",
-        "Microsoft.WindowsFeedbackHub", "Microsoft.MSPaint", "Microsoft.Office.OneNote", 
-        "Microsoft.WindowsPhotos"
-    )
-    foreach ($app in $extraBloat) { Get-AppxPackage -Name $app -AllUsers | Remove-AppxPackage -ErrorAction SilentlyContinue }
-
-    # Visual Tweaks
-    Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "MenuShowDelay" -Value 100 -ErrorAction SilentlyContinue
-    Set-ItemProperty -Path "HKCU:\Control Panel\Desktop\WindowMetrics" -Name "MinAnimate" -Value 0 -ErrorAction SilentlyContinue
-
-    Write-Host "Aggressive tweaks applied." -ForegroundColor Green
-    Pause 
-}
-
-# ------------------------------
-#            MAIN LOOP 
-# ------------------------------
-do {
-    LT-Menu
-    $choice = Read-Host "Select an option"
-    switch ($choice) {
-        "1" { LT-SystemInfo }
-        "2" { LT-CleanTemp }
-        "3" { LT-StartupOptimizer }
-        "4" { LT-ToggleTheme }
-        "5" { LT-RestorePoint }
-        "6" { LT-NetworkReset }
-        "7" { LT-InternetOptimize }
-        "8" { LT-Latency }
-        "9" { LT-DNSChanger }
-        "10" { LT-ServiceOptimize }
-        "11" { LT-RepairTools }
-        "12" { LT-Debloat }
-        "13" { LT-FPSBoost }
-        "14" { LT-VisualOptimize } 
-        "15" { LT-TimerResolution } 
-        "16" { LT-SmartProcessReducer }
-        "17" { LT-DeepProcessCleaner } 
-        "18" { LT-ExtremeProcessPurge } 
-        "19" { LT-MemoryOptimizer } 
-        "20" { LT-ExtraSafeTweaks } 
-        "21" { LT-InputLatencyOptimizerMenu } 
-        "22" { LT-Update }
-        "23" { Write-Host "Exiting THVO Tweaker..." -ForegroundColor Cyan; Start-Sleep 1 }
-        default { Write-Host "Invalid selection." -ForegroundColor Red; Start-Sleep 1 }
-    }
-} while ($choice -ne 23)
+    # Expanded list of non
