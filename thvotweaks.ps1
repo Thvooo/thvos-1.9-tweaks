@@ -1,6 +1,6 @@
 # ===========================================
-#       LIQUID TECH PC Tweaker v3.5
-#    Ultimate Process & Service Killer
+#       LIQUID TECH PC Tweaker v3.6
+#    Aggressive Debloat & Ultimate Process Killer
 # ===========================================
 
 # --- SELF-ELEVATION CHECK ---
@@ -10,7 +10,7 @@ if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]:
     Exit
 }
 
-$LTVersion = "3.5"   
+$LTVersion = "3.6"   
 # IMPORTANT: Update this URL to point to the raw content of your file on GitHub
 $LTRepoURL = "https://raw.githubusercontent.com/Thvooo/thvos-1.9-tweaks/main/thvotweaks.ps1" 
 
@@ -80,7 +80,7 @@ function LT-Menu {
     Write-Host "`n  [ PERFORMANCE ]" -ForegroundColor Cyan
     Write-Host "   10) Windows Services Optimization (Expanded Services!)"
     Write-Host "   11) Repair Windows Components (DISM/SFC)"
-    Write-Host "   12) Debloater (Safe Apps Only)"
+    Write-Host "   12) Aggressive Debloater (Removes 20+ UWP Apps!) (UPDATED!)"
     Write-Host "   13) FPS Booster (Advanced + Power Fix)"
     Write-Host "   14) Aggressive Visual Optimization (MAX FPS Tweak)"
     Write-Host "   15) System Timer Resolution Fix (Thread Priority)"
@@ -89,7 +89,7 @@ function LT-Menu {
     Write-Host "   16) Smart Process Reducer (Superfetch/Error Fix!)"
     Write-Host "   17) Deep Process Cleaner (Media/UPnP Services)"
     Write-Host "   18) Extreme Process Purge (Camera/App Experience!)"
-    Write-Host "   19) Ultimate Bloatware & Telemetry Silencer (NEW!)"
+    Write-Host "   19) Ultimate Bloatware & Telemetry Silencer"
     Write-Host "   20) Virtual Memory Optimizer"
     Write-Host "   21) Extra Safe Tweaks"
 
@@ -346,7 +346,7 @@ function LT-ExtremeProcessPurge {
 }
 
 # ------------------------------
-#      Ultimate Bloatware Silencer (NEW OPTION 19)
+#      Ultimate Bloatware Silencer 
 # ------------------------------
 function LT-UltimateBloatSilencer {
     LT-Header
@@ -656,22 +656,59 @@ function LT-RepairTools {
 }
 
 # ------------------------------
-#        Debloater (SAFE) 
+#      Aggressive Debloater (New Option 12) 
 # ------------------------------
-function LT-Debloat {
+function LT-AggressiveDebloat {
     LT-Header
-    Write-Host "Removing Junk Apps (Safe List)..." -ForegroundColor Yellow
-    $bloat = @(
-        "Microsoft.3DBuilder", "Microsoft.XboxApp", "Microsoft.People",
-        "Microsoft.MinecraftUWP", "Microsoft.BingWeather", "Microsoft.GetHelp",
-        "Microsoft.Getstarted", "Microsoft.MicrosoftSolitaireCollection"
+    Write-Host "💀 AGGRESSIVE UWP DEBLOATER" -ForegroundColor Red
+    Write-Host "WARNING: This removes most Windows Store apps (Calculator, Mail, Photos, Xbox, etc.)." -ForegroundColor Yellow
+    Write-Host "You must reinstall them from the Store if you need them later." -ForegroundColor Yellow
+    Write-Host ""
+    $confirm = Read-Host "Proceed with Aggressive Debloat? (Y/N)"
+    
+    if ($confirm -ne "Y" -and $confirm -ne "y") { 
+        Write-Host "Aggressive Debloat aborted." -ForegroundColor DarkYellow
+        Pause
+        return 
+    }
+
+    $appsToKill = @(
+        # Office/Productivity
+        "Microsoft.Office.OneNote", 
+        
+        # Communication/Social
+        "Microsoft.People", "Microsoft.SkypeApp", "Microsoft.GetHelp",
+        
+        # Media & Gaming
+        "Microsoft.ZuneMusic", "Microsoft.ZuneVideo", "Microsoft.XboxApp",
+        "Microsoft.Xbox.TCUI", "Microsoft.XboxIdentityProvider", "Microsoft.XboxGameCallableUI",
+        "Microsoft.MinecraftUWP", "Microsoft.WindowsSoundRecorder",
+        
+        # Tools & Utilities
+        "Microsoft.3DBuilder", "Microsoft.Getstarted", "Microsoft.WindowsAlarms", 
+        "Microsoft.WindowsCalculator", "Microsoft.WindowsCamera", "Microsoft.WindowsMaps",
+        "Microsoft.WindowsPhotos", "Microsoft.Paint",
+        
+        # Other Bloat
+        "Microsoft.BingWeather", "Microsoft.MicrosoftSolitaireCollection",
+        "Microsoft.WindowsFeedbackHub", "Microsoft.MixedReality.Portal"
     )
-    foreach ($app in $bloat) { 
+
+    Write-Host "Removing Apps..." -ForegroundColor Yellow
+    foreach ($app in $appsToKill) { 
+        Write-Host "  Removing: $app" -ForegroundColor Gray
         Get-AppxPackage -Name $app -AllUsers | Remove-AppxPackage -ErrorAction SilentlyContinue 
     }
-    Write-Host "Debloating complete." -ForegroundColor Green
+    
+    Write-Host "Disabling Provisioned App Packages (Prevents reinstallation for new users)..." -ForegroundColor Yellow
+    foreach ($app in $appsToKill) {
+        Get-AppxProvisionedPackage -Online | Where-Object {$_.PackageName -like "$app*"} | Remove-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue | Out-Null
+    }
+
+    Write-Host "Aggressive Debloat complete. Some remnants may require a reboot." -ForegroundColor Green
     Pause
 }
+
 
 # ------------------------------
 #    FPS Booster (Fixed Power Plan) 
@@ -920,42 +957,6 @@ function LT-DNSChanger {
     Pause
 }
 
-
-# ------------------------------
-#        Extra Debloater (Aggressive) 
-# ------------------------------
-function LT-ExtraDebloat {
-    LT-Header
-    Write-Host "WARNING: This Mode is AGGRESSIVE." -ForegroundColor Red
-    Write-Host "It will remove: Calculator, Photos, Camera, Voice Recorder, etc."
-    Write-Host "Are you sure? (Y/N)" -ForegroundColor Yellow
-    $confirm = Read-Host ""
-    
-    if ($confirm -ne "Y" -and $confirm -ne "y") { 
-        Write-Host "Aggressive Debloat aborted." -ForegroundColor DarkYellow
-        Pause
-        return 
-    }
-
-    Write-Host "Applying aggressive debloat..." -ForegroundColor Yellow
-
-    $extraBloat = @(
-        "Microsoft.ZuneMusic", "Microsoft.ZuneVideo", "Microsoft.SkypeApp",
-        "Microsoft.WindowsAlarms", "Microsoft.WindowsCalculator",
-        "Microsoft.WindowsCamera", "Microsoft.WindowsMaps", "Microsoft.WindowsSoundRecorder",
-        "Microsoft.WindowsFeedbackHub", "Microsoft.MSPaint", "Microsoft.Office.OneNote", 
-        "Microsoft.WindowsPhotos"
-    )
-    foreach ($app in $extraBloat) { Get-AppxPackage -Name $app -AllUsers | Remove-AppxPackage -ErrorAction SilentlyContinue }
-
-    # Visual Tweaks
-    Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "MenuShowDelay" -Value 100 -ErrorAction SilentlyContinue
-    Set-ItemProperty -Path "HKCU:\Control Panel\Desktop\WindowMetrics" -Name "MinAnimate" -Value 0 -ErrorAction SilentlyContinue
-
-    Write-Host "Aggressive tweaks applied." -ForegroundColor Green
-    Pause 
-}
-
 # ------------------------------
 #            MAIN LOOP 
 # ------------------------------
@@ -974,7 +975,7 @@ do {
         "9" { LT-DNSChanger }
         "10" { LT-ServiceOptimize }
         "11" { LT-RepairTools }
-        "12" { LT-Debloat }
+        "12" { LT-AggressiveDebloat } # NEW/UPDATED
         "13" { LT-FPSBoost }
         "14" { LT-VisualOptimize } 
         "15" { LT-TimerResolution } 
