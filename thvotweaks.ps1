@@ -1,6 +1,6 @@
 # ===========================================
-#       LIQUID TECH PC Tweaker v3.2
-#    Dynamic DNS Optimizer Build
+#       LIQUID TECH PC Tweaker v3.3
+#    Timer Resolution Restored
 # ===========================================
 
 # --- SELF-ELEVATION CHECK ---
@@ -10,7 +10,7 @@ if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]:
     Exit
 }
 
-$LTVersion = "3.2"   
+$LTVersion = "3.3"   
 # IMPORTANT: Update this URL to point to the raw content of your file on GitHub
 $LTRepoURL = "https://raw.githubusercontent.com/Thvooo/thvos-1.9-tweaks/main/thvotweaks.ps1" 
 
@@ -83,21 +83,22 @@ function LT-Menu {
     Write-Host "   12) Debloater (Safe Apps Only)"
     Write-Host "   13) FPS Booster (Advanced + Power Fix)"
     Write-Host "   14) Aggressive Visual Optimization (MAX FPS Tweak)"
-    
+    Write-Host "   15) System Timer Resolution Fix (Thread Priority)"
+
     Write-Host "`n  [ PROCESS & MEMORY ]" -ForegroundColor Cyan
-    Write-Host "   15) Smart Process Reducer (Superfetch/Error Fix!)"
-    Write-Host "   16) Deep Process Cleaner (Media/UPnP Services)"
-    Write-Host "   17) Extreme Process Purge (Camera/App Experience!)"
-    Write-Host "   18) Virtual Memory Optimizer"
-    Write-Host "   19) Extra Safe Tweaks"
+    Write-Host "   16) Smart Process Reducer (Superfetch/Error Fix!)"
+    Write-Host "   17) Deep Process Cleaner (Media/UPnP Services)"
+    Write-Host "   18) Extreme Process Purge (Camera/App Experience!)"
+    Write-Host "   19) Virtual Memory Optimizer"
+    Write-Host "   20) Extra Safe Tweaks"
 
     Write-Host "`n  [ INPUT LATENCY ]" -ForegroundColor Cyan
-    Write-Host "   20) Input Latency Optimizer (Submenu)"
+    Write-Host "   21) Input Latency Optimizer (Submenu)"
 
 
     Write-Host "`n  [ OTHER ]" -ForegroundColor Cyan
-    Write-Host "   21) Check for Updates"
-    Write-Host "   22) Exit"
+    Write-Host "   22) Check for Updates"
+    Write-Host "   23) Exit"
     Write-Host ""
 }
 
@@ -419,18 +420,18 @@ function LT-ExtraSafeTweaks {
 function LT-InputLatencyOptimizerMenu {
     LT-Header
     Write-Host "  [ INPUT LATENCY OPTIMIZER ]" -ForegroundColor Cyan
-    Write-Host "   20.1) Standard Mouse/Keyboard Fixes (Queue, Speed, Acceleration)"
-    Write-Host "   20.2) USB Polling & Interrupt Tweak (Force High Priority)"
-    Write-Host "   20.3) Gaming Input Buffer Reduction (Desktop Composition)"
-    Write-Host "   20.4) Return to Main Menu"
+    Write-Host "   21.1) Standard Mouse/Keyboard Fixes (Queue, Speed, Acceleration)"
+    Write-Host "   21.2) USB Polling & Interrupt Tweak (Force High Priority)"
+    Write-Host "   21.3) Gaming Input Buffer Reduction (Desktop Composition)"
+    Write-Host "   21.4) Return to Main Menu"
     Write-Host ""
 
     $subChoice = Read-Host "Select a sub-option"
     switch ($subChoice) {
-        "20.1" { LT-StandardInputFixes }
-        "20.2" { LT-USBPriorityFix }
-        "20.3" { LT-GamingBufferReduce }
-        "20.4" { return }
+        "21.1" { LT-StandardInputFixes }
+        "21.2" { LT-USBPriorityFix }
+        "21.3" { LT-GamingBufferReduce }
+        "21.4" { return }
         default { Write-Host "Invalid selection." -ForegroundColor Red; Start-Sleep 1 }
     }
     Pause
@@ -673,6 +674,11 @@ function LT-VisualOptimize {
     Pause
 }
 
+# ------------------------------
+#    System Timer Resolution Fix (REMOVED AND REPLACED IN THIS VERSION)
+# ------------------------------
+# Function Deleted as requested.
+
 
 # ------------------------------
 #        Latency Optimizer 
@@ -865,14 +871,13 @@ do {
         "12" { LT-Debloat }
         "13" { LT-FPSBoost }
         "14" { LT-VisualOptimize } 
-        # Option 15 (System Timer Resolution Fix) removed.
-        "15" { LT-SmartProcessReducer } # Mapped to new menu number
-        "16" { LT-DeepProcessCleaner }  # Mapped to new menu number
-        "17" { LT-ExtremeProcessPurge } # Mapped to new menu number
-        "18" { LT-MemoryOptimizer }     # Mapped to new menu number
-        "19" { LT-ExtraSafeTweaks }     # Mapped to new menu number
-        "20" { LT-InputLatencyOptimizerMenu } # Mapped to new menu number
-        "21" { LT-Update }              # Mapped to new menu number
+        "15" { LT-SmartProcessReducer } 
+        "16" { LT-DeepProcessCleaner } 
+        "17" { LT-ExtremeProcessPurge } 
+        "18" { LT-MemoryOptimizer } 
+        "19" { LT-ExtraSafeTweaks } 
+        "20" { LT-InputLatencyOptimizerMenu } 
+        "21" { LT-Update }
         "22" { Write-Host "Exiting THVO Tweaker..." -ForegroundColor Cyan; Start-Sleep 1 }
         default { Write-Host "Invalid selection." -ForegroundColor Red; Start-Sleep 1 }
     }
