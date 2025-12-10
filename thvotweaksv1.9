@@ -1,6 +1,6 @@
 # ===========================================
-#       LIQUID TECH PC Tweaker v2.0
-#    Input Latency Fix & Safe Tweaks Added
+#       LIQUID TECH PC Tweaker v2.2
+#    FORCED REGISTRY ACCESS for Input Fix
 # ===========================================
 
 # --- SELF-ELEVATION CHECK ---
@@ -10,7 +10,7 @@ if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]:
     Exit
 }
 
-$LTVersion = "2.0"   
+$LTVersion = "2.2"   
 $LTRepoURL = "https://raw.githubusercontent.com/YOURNAME/YOURREPO/main/LiquidTechTweaker.ps1"
 
 # ------------------------------
@@ -84,8 +84,8 @@ function LT-Menu {
     Write-Host "   14) Extra Debloater (Aggressive)"
     Write-Host "   15) Smart Process Reducer"
     Write-Host "   16) Virtual Memory Optimizer"
-    Write-Host "   17) Extra Safe Tweaks (New!)"
-    Write-Host "   18) Input Latency Fix (New!)"
+    Write-Host "   17) Extra Safe Tweaks"
+    Write-Host "   18) Input Latency Fix (Fixed Registry Access!)"
 
 
     Write-Host "`n  [ OTHER ]" -ForegroundColor Cyan
@@ -95,7 +95,7 @@ function LT-Menu {
 }
 
 # ------------------------------
-#       System Tools
+#       System Tools (No Change)
 # ------------------------------
 function LT-SystemInfo {
     LT-Header
@@ -172,7 +172,7 @@ function LT-ServiceOptimize {
 }
 
 # ------------------------------
-#      Smart Process Reducer
+#      Smart Process Reducer (No Change)
 # ------------------------------
 function LT-ProcessReducer {
     LT-Header
@@ -216,7 +216,7 @@ function LT-ProcessReducer {
 }
 
 # ------------------------------
-#      Virtual Memory Optimizer
+#      Virtual Memory Optimizer (No Change)
 # ------------------------------
 function LT-MemoryOptimizer {
     LT-Header
@@ -255,7 +255,7 @@ function LT-MemoryOptimizer {
 }
 
 # ------------------------------
-#      Extra Safe Tweaks (New)
+#      Extra Safe Tweaks (No Change)
 # ------------------------------
 function LT-ExtraSafeTweaks {
     LT-Header
@@ -286,7 +286,7 @@ function LT-ExtraSafeTweaks {
 }
 
 # ------------------------------
-#      Input Latency Fix (New)
+#      Input Latency Fix (FIXED REGISTRY ACCESS)
 # ------------------------------
 function LT-InputLatencyFix {
     LT-Header
@@ -294,35 +294,47 @@ function LT-InputLatencyFix {
     Write-Host "Applying verified registry tweaks to reduce input processing delays." -ForegroundColor Gray
     Write-Host ""
 
-    # 1. Mouse/Keyboard Input Queue Reduction (The most effective system-wide fix)
-    Write-Host "Applying Low Latency Input Queue Tweak..." -ForegroundColor Yellow
+    # 1. Mouse/Keyboard Input Queue Reduction (FORCED ACCESS using Reg.exe)
+    Write-Host "Applying Low Latency Input Queue Tweak (Forcing access via Reg.exe)..." -ForegroundColor Yellow
     
-    # This key controls how many messages the system keeps in the mouse/keyboard buffer queue.
-    # Lowering this helps the OS process input events faster.
-    $queuePath = "HKLM:\SYSTEM\CurrentControlSet\Control\Class\{4d36e96f-e325-11ce-bfc1-08002be10318}"
+    # Mouse Class GUID
+    $mouseQueuePathBase = "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e96f-e325-11ce-bfc1-08002be10318}"
+    # Keyboard Class GUID
+    $keyboardQueuePathBase = "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e96b-e325-11ce-bfc1-08002be10318}"
+
+    $paths = @($mouseQueuePathBase, $keyboardQueuePathBase)
     
-    if (-not (Test-Path -Path $queuePath)) {
-        Write-Host "Error: Cannot find required registry path for input queue fix." -ForegroundColor Red
-    } else {
-        # Finds all subkeys (devices) and sets the recommended value 
-        Get-ChildItem -Path $queuePath | ForEach-Object {
-            New-ItemProperty -Path $_.PSPath -Name "MaxInputDataQueueLength" -Value 20 -PropertyType DWord -Force -ErrorAction SilentlyContinue | Out-Null
+    foreach ($path in $paths) {
+        # Use Reg Query to find all subkeys (0000, 0001, etc.)
+        $subkeys = (reg query $path /s 2>$null | Select-String -Pattern "HKEY_LOCAL_MACHINE").Line
+        
+        foreach ($subkey in $subkeys) {
+            # Extract the subkey path (e.g., ...\{GUID}\0000)
+            $subkey = $subkey.Split(" ")[-1]
+
+            # Use Reg Add to force the MaxInputDataQueueLength value
+            $command = "reg add `"$subkey`" /v MaxInputDataQueueLength /t REG_DWORD /d 20 /f"
+            Invoke-Expression $command | Out-Null
         }
+        Write-Host "  Applied to $path..." -ForegroundColor DarkGray
     }
 
-    # 2. Keyboard Repeat Rate Fix (Minimum delay/Maximum repeat speed)
+
+    # 2. DISABLE Mouse Acceleration (Enhanced Pointer Precision)
+    Write-Host "Disabling Enhanced Pointer Precision (Mouse Acceleration)..." -ForegroundColor Yellow
+    $mouseReg = "HKCU:\Control Panel\Mouse"
+    
+    Set-ItemProperty -Path $mouseReg -Name "MouseThreshold1" -Value 0 -Type String -Force | Out-Null
+    Set-ItemProperty -Path $mouseReg -Name "MouseThreshold2" -Value 0 -Type String -Force | Out-Null
+    Set-ItemProperty -Path $mouseReg -Name "MouseSpeed" -Value 1 -Type String -Force | Out-Null 
+    Set-ItemProperty -Path $mouseReg -Name "MouseAcceleration" -Value 0 -Type String -Force | Out-Null
+
+    # 3. Keyboard Repeat Rate Fix (Minimum delay/Maximum repeat speed)
     Write-Host "Setting Keyboard Repeat Rate to Max Speed..." -ForegroundColor Yellow
     $keyboardReg = "HKCU:\Control Panel\Keyboard"
     Set-ItemProperty -Path $keyboardReg -Name "KeyboardDelay" -Value 0 -Type String -Force | Out-Null # Minimum delay (0-3)
     Set-ItemProperty -Path $keyboardReg -Name "KeyboardSpeed" -Value 31 -Type String -Force | Out-Null # Maximum speed (0-31)
 
-    # 3. Mouse Responsiveness
-    Write-Host "Adjusting Mouse Sensitvity/Speed..." -ForegroundColor Yellow
-    $mouseReg = "HKCU:\Control Panel\Mouse"
-    Set-ItemProperty -Path $mouseReg -Name "MouseSensitivity" -Value 10 -Type String -Force | Out-Null 
-    Set-ItemProperty -Path $mouseReg -Name "MouseSpeed" -Value 1 -Type String -Force | Out-Null
-    Set-ItemProperty -Path $mouseReg -Name "MouseThreshold1" -Value 0 -Type String -Force | Out-Null
-    Set-ItemProperty -Path $mouseReg -Name "MouseThreshold2" -Value 0 -Type String -Force | Out-Null
 
     Write-Host "Input latency fixes applied. Please reboot your PC to feel the full effect." -ForegroundColor Green
     Pause
@@ -330,7 +342,7 @@ function LT-InputLatencyFix {
 
 
 # ------------------------------
-#        Internet Optimizer
+#        Internet Optimizer (No Change)
 # ------------------------------
 function LT-InternetOptimize {
     LT-Header
@@ -345,7 +357,7 @@ function LT-InternetOptimize {
 }
 
 # ------------------------------
-#           Repair Tools
+#           Repair Tools (No Change)
 # ------------------------------
 function LT-RepairTools {
     LT-Header
@@ -358,7 +370,7 @@ function LT-RepairTools {
 }
 
 # ------------------------------
-#        Debloater (SAFE)
+#        Debloater (SAFE) (No Change)
 # ------------------------------
 function LT-Debloat {
     LT-Header
@@ -377,7 +389,7 @@ function LT-Debloat {
 }
 
 # ------------------------------
-#    FPS Booster (Fixed Power Plan)
+#    FPS Booster (Fixed Power Plan) (No Change)
 # ------------------------------
 function LT-FPSBoost {
     LT-Header
@@ -425,7 +437,7 @@ function LT-FPSBoost {
 }
 
 # ------------------------------
-#        Latency Optimizer (Network)
+#        Latency Optimizer (Network) (No Change)
 # ------------------------------
 function LT-Latency {
     LT-Header
@@ -438,7 +450,7 @@ function LT-Latency {
 }
 
 # ------------------------------
-#        DNS Changer Module
+#        DNS Changer Module (No Change)
 # ------------------------------
 function LT-DNSChanger {
     LT-Header
@@ -478,7 +490,7 @@ function LT-DNSChanger {
 }
 
 # ------------------------------
-#        Extra Debloater (Aggressive)
+#        Extra Debloater (Aggressive) (No Change)
 # ------------------------------
 function LT-ExtraDebloat {
     LT-Header
